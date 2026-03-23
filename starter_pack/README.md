@@ -1,90 +1,48 @@
-# Football Match Outcome Prediction
+# Math4AI Starter Pack
 
-## NAIC - Math4AI Capstone Project
+This starter pack is intentionally minimal. Its job is to remove setup noise, not to reduce the intellectual core of the capstone.
 
----
+## Included
 
-## Project Objective
+- `data/digits_data.npz`, containing the fixed digits feature matrix and label vector
+- `data/digits_split_indices.npz`, containing the fixed train/validation/test indices
+- `scripts/make_digits_split.py`, a deterministic split-generation script
+- `data/linear_gaussian.npz` for the linear synthetic task
+- `data/moons.npz` for the nonlinear synthetic task
+- `scripts/generate_synthetic.py`, which regenerates the two synthetic datasets
+- a minimal repository skeleton
+- `starter_pack/README.md` and `starter_pack/CHECKLIST.md`
+- an optional LaTeX report template at `report/template.tex`
 
-Predict football match outcomes (Home Win / Draw / Away Win) using machine learning and neural network approaches.
+## Not Included
 
----
+- softmax regression code
+- neural network code
+- model skeletons or placeholder methods
+- training-loop scaffolding
+- optimizer implementations
+- optimization utilities beyond basic data preparation
+- plotting code for experiments
+- any hidden implementation of the core methods
 
-## Environment Setup
+Students are expected to implement the intellectually central parts of the project themselves.
 
-```bash
-# Clone the repository
-git clone <repository-url>
-cd starter_pack
+## Team
 
-# Install dependencies
-pip install -r requirements.txt
-```
+Replace this section with your team members and high-level responsibilities.
 
----
+- Name 1: role
+- Name 2: role
+- Name 3: role
 
-## Reproducing Main Experiments
+## Suggested Repository Layout
 
-### Part 1: Data Analysis & Visualization (25 points)
-```bash
-python scripts/run_analysis.py
-```
+- `data/`: provided data, split indices, and any team-generated derived arrays
+- `scripts/`: deterministic starter-pack utilities
+- `src/`: model, training, and evaluation code written by the team
+- `figures/`: plots for the report and slides
+- `results/`: saved experiment outputs and summary tables
+- `report/`: final PDF report and source files
+- `slides/`: presentation materials
 
-### Part 2: Machine Learning Models (40 points)
-```bash
-python scripts/run_ml_models.py
-```
-
-### Part 3: Neural Network (20 points)
-```bash
-python scripts/run_neural_network.py
-```
-
-### Part 4: Feature Importance (15 points)
-```bash
-python scripts/run_feature_importance.py
-```
-
-### Complete Pipeline
-```bash
-python scripts/main.py
-```
-
----
-
-## Folder Structure
-
-| Folder | Description |
-|--------|-------------|
-| `data/` | Raw and processed datasets (football_data.csv) |
-| `scripts/` | Executable scripts for running experiments |
-| `src/` | Source code for all project modules |
-| `figures/` | Generated visualizations and plots |
-| `results/` | Model outputs, predictions, metrics |
-| `report/` | Final project report and documentation |
-| `slides/` | Presentation slides |
-
-### Source Code Modules (`src/`)
-
-- `part1_data_analysis/` - Data loading, cleaning, feature engineering, visualization
-- `part2_ml_models/` - Logistic Regression, Decision Tree, Random Forest, XGBoost
-- `part3_neural_network/` - Neural network architecture and training
-- `part4_feature_importance/` - SHAP analysis and feature importance visualization
-
----
-
-## Team Contributions
-
-| Team Member | Responsibilities |
-|-------------|-------------------|
-| Member 1 | Data preprocessing & feature engineering |
-| Member 2 | Machine learning model implementation |
-| Member 3 | Neural network architecture & training |
-| Member 4 | Feature importance analysis & visualization |
-
----
-
-## Requirements
-
-- Python 3.8+
-- See `requirements.txt` for dependencies
+The starter pack leaves `src/` intentionally empty except for guidance text. Begin by reading `starter_pack/README.md` and `starter_pack/CHECKLIST.md`.
