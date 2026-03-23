@@ -347,7 +347,7 @@ def run_synthetic_experiment(
     plt.show()
 
     # Training dynamics
-    fig, axes = plt.subplots(2, 1, figsize=(14, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(14, 8))
 
     plot_training_dynamics(softmax_history, title='Softmax Training', ax=axes[0])
     plot_training_dynamics(nn_history, title='NN Training', ax=axes[1])
@@ -443,7 +443,7 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     print(f"NN - Test Accuracy: {nn_metrics['accuracy']:.4f}, Loss: {nn_metrics['cross_entropy']:.4f}")
 
     # Training dynamics
-    fig, axes = plt.subplots(2, 1, figsize=(14, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(14, 8))
     plot_training_dynamics(softmax_history, title='Softmax on Digits', ax=axes[0])
     plot_training_dynamics(nn_history, title='NN on Digits', ax=axes[1])
     plt.tight_layout()
