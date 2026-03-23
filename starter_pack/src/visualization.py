@@ -41,7 +41,7 @@ def plot_decision_boundary(
         Matplotlib axes object
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 8))
+        fig, ax = plt.subplots(figsize=(12, 9))
 
     # Define plot bounds with padding
     x_min, x_max = X[:, 0].min() - 0.5, X[:, 0].max() + 0.5
@@ -72,6 +72,7 @@ def plot_decision_boundary(
     ax.set_ylim(yy.min(), yy.max())
 
     if save_path:
+        plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
     return ax
@@ -97,48 +98,71 @@ def plot_training_dynamics(
         history: TrainingHistory object from trainer
         title: Plot title
         save_path: If provided, save figure
-        ax: If provided, plot on this axes (for subplots)
+        ax: If provided, plot on this axis (with loss on left y-axis, accuracy on right)
 
     Returns:
         Matplotlib figure
     """
     if ax is None:
-        fig, ax = plt.subplots(figsize=(10, 6))
-        return_fig = True
+        # Standalone mode: create figure with loss and accuracy subplots
+        fig, axes = plt.subplots(2, 1, figsize=(10, 10))
+
+        epochs = range(1, len(history.train_losses) + 1)
+
+        # Left plot: Loss
+        axes[0].plot(epochs, history.train_losses, 'b-', label='Train', linewidth=2)
+        axes[0].plot(epochs, history.val_losses, 'r-', label='Validation', linewidth=2)
+        axes[0].set_xlabel('Epoch')
+        axes[0].set_ylabel('Cross-Entropy Loss')
+        axes[0].set_title('Training and Validation Loss')
+        axes[0].legend()
+        axes[0].grid(True, alpha=0.3)
+
+        # Right plot: Accuracy
+        axes[1].plot(epochs, history.train_accuracies, 'b-', label='Train', linewidth=2)
+        axes[1].plot(epochs, history.val_accuracies, 'r-', label='Validation', linewidth=2)
+        axes[1].set_xlabel('Epoch')
+        axes[1].set_ylabel('Accuracy')
+        axes[1].set_title('Training and Validation Accuracy')
+        axes[1].legend()
+        axes[1].grid(True, alpha=0.3)
+
+        fig.suptitle(title, fontsize=16)
+        plt.tight_layout()
+
+        if save_path:
+            plt.savefig(save_path, dpi=300, bbox_inches='tight')
+
+        return fig
     else:
+        # Single axis mode: plot loss and accuracy with dual y-axes
         fig = ax.figure
-        return_fig = False
+        ax2 = ax.twinx()
 
-    epochs = range(1, len(history.train_losses) + 1)
+        epochs = range(1, len(history.train_losses) + 1)
 
-    # Plot both loss and accuracy on the same axes with twin y-axes
-    ax2 = ax.twinx()
+        # Loss on left y-axis (blue)
+        line1 = ax.plot(epochs, history.train_losses, 'b-', label='Train Loss', linewidth=2)
+        line2 = ax.plot(epochs, history.val_losses, 'b--', label='Val Loss', linewidth=2)
+        ax.set_xlabel('Epoch')
+        ax.set_ylabel('Cross-Entropy Loss', color='blue')
+        ax.tick_params(axis='y', labelcolor='blue')
 
-    # Loss on left y-axis
-    line1 = ax.plot(epochs, history.train_losses, 'b-', label='Train Loss', linewidth=2)
-    line2 = ax.plot(epochs, history.val_losses, 'b--', label='Val Loss', linewidth=2)
-    ax.set_xlabel('Epoch')
-    ax.set_ylabel('Cross-Entropy Loss', color='blue')
-    ax.tick_params(axis='y', labelcolor='blue')
+        # Accuracy on right y-axis (red)
+        line3 = ax2.plot(epochs, history.train_accuracies, 'r-', label='Train Acc', linewidth=2)
+        line4 = ax2.plot(epochs, history.val_accuracies, 'r--', label='Val Acc', linewidth=2)
+        ax2.set_ylabel('Accuracy', color='red')
+        ax2.tick_params(axis='y', labelcolor='red')
 
-    # Accuracy on right y-axis
-    line3 = ax2.plot(epochs, history.train_accuracies, 'r-', label='Train Acc', linewidth=2)
-    line4 = ax2.plot(epochs, history.val_accuracies, 'r--', label='Val Acc', linewidth=2)
-    ax2.set_ylabel('Accuracy', color='red')
-    ax2.tick_params(axis='y', labelcolor='red')
+        ax.set_title(title)
+        ax.grid(True, alpha=0.3)
 
-    ax.set_title(title)
-    ax.grid(True, alpha=0.3)
+        # Combined legend
+        lines = line1 + line2 + line3 + line4
+        labels = [l.get_label() for l in lines]
+        ax.legend(lines, labels, loc='center right')
 
-    # Combined legend
-    lines = line1 + line2 + line3 + line4
-    labels = [l.get_label() for l in lines]
-    ax.legend(lines, labels, loc='center right')
-
-    if return_fig and save_path:
-        plt.savefig(save_path, dpi=300, bbox_inches='tight')
-
-    return fig
+        return fig
 
 
 def plot_confidence_vs_accuracy(
@@ -164,7 +188,7 @@ def plot_confidence_vs_accuracy(
     Returns:
         Matplotlib figure
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     # Extract data from bins
     bin_centers = [b['mean_confidence'] for b in confidence_bins]
@@ -193,6 +217,7 @@ def plot_confidence_vs_accuracy(
     ax.legend()
 
     if save_path:
+        plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
     return fig
@@ -223,7 +248,7 @@ def plot_optimizer_comparison(
     Returns:
         Matplotlib figure
     """
-    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(10, 12))
 
     # Define colors for each optimizer
     colors = {'SGD': 'blue', 'Momentum': 'green', 'Adam': 'red'}
@@ -328,7 +353,7 @@ def plot_repeated_seed_results(
     Returns:
         Matplotlib figure
     """
-    fig, axes = plt.subplots(1, 2, figsize=(12, 5))
+    fig, axes = plt.subplots(2, 1, figsize=(10, 10))
 
     x_pos = np.arange(len(results))
     labels = [r.model_name for r in results]
@@ -391,7 +416,7 @@ def plot_pca_scree(
     Returns:
         Matplotlib figure
     """
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(12, 8))
 
     n = min(len(eigenvalues), n_components_show)
     components = np.arange(1, n + 1)
@@ -412,6 +437,7 @@ def plot_pca_scree(
     ax.grid(True, alpha=0.3)
 
     if save_path:
+        plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
     return fig
@@ -439,7 +465,7 @@ def plot_pca_2d(
     Returns:
         Matplotlib axes
     """
-    fig, ax = plt.subplots(figsize=(10, 8))
+    fig, ax = plt.subplots(figsize=(12, 9))
 
     # Scatter plot with colors by digit
     scatter = ax.scatter(X_pca[:, 0], X_pca[:, 1], c=y, cmap='tab10',
@@ -456,6 +482,7 @@ def plot_pca_2d(
     ax.grid(True, alpha=0.3)
 
     if save_path:
+        plt.tight_layout()
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
     return ax
@@ -490,7 +517,8 @@ def plot_confusion_matrix(
 
     cm = confusion_matrix(y_true, y_pred)
 
-    fig, ax = plt.subplots(figsize=(10, 8))
+    # Use larger figure for confusion matrix to accommodate labels
+    fig, ax = plt.subplots(figsize=(12, 10))
     im = ax.imshow(cm, interpolation='nearest', cmap=plt.cm.Blues)
     ax.figure.colorbar(im, ax=ax)
 
@@ -518,6 +546,7 @@ def plot_confusion_matrix(
     ax.set_ylabel('True label')
     ax.set_title(title)
 
+    plt.tight_layout()
     if save_path:
         plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
