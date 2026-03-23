@@ -2,7 +2,7 @@
 
 Text to be changed (maybe) later:
 
-## **File 1: models.py - Core Neural Network Implementations**
+# **File 1: models.py - Core Neural Network Implementations**
 
 ### **Softmax Regression (Multiclass Logistic Regression)**
 
@@ -43,7 +43,7 @@ To prevent numerical overflow (e.g., $e^{1000}$), the implementation uses a "sta
 
 ---
 
-## **File 2: optimizers.py - Optimization Algorithms**
+# **File 2: optimizers.py - Optimization Algorithms**
 
 ### **SGD (Stochastic Gradient Descent)**
 The simplest optimizer, where parameters are updated by moving in the opposite direction of the gradient scaled by a learning rate $\eta$:
@@ -59,7 +59,7 @@ Adam combines Momentum (first moment) with per-parameter learning rates (second 
 
 ---
 
-## **File 3: trainer.py - Training Infrastructure**
+# **File 3: trainer.py - Training Infrastructure**
 
 ### **Training Loop Structure**
 The trainer manages the lifecycle of the model:
@@ -78,7 +78,7 @@ The system saves the model when it achieves the best validation loss. This preve
 
 ---
 
-## **File 4: evaluation.py - Model Evaluation**
+# **File 4: evaluation.py - Model Evaluation**
 
 ### **Statistical Significance Testing**
 Because neural network training is stochastic (due to random initialization), the library reports confidence intervals. Using a t-distribution for small sample sizes (e.g., 5 different random seeds) provides a mathematically sound way to say, "We are 95% confident the true accuracy falls within this range."
@@ -89,13 +89,59 @@ This is a critical debugging tool. It compares the "analytical" gradients (deriv
 ### **Model Calibration**
 This measures if a model's "confidence" matches its actual accuracy. An overconfident model might predict a class with 99% probability but only be right 70% of the time—a dangerous trait in high-stakes fields like medicine or self-driving cars.
 
+
 ---
 
-## **File 5: visualization.py - Scientific Plotting**
+# **File 5: visualization.py - Visualization helpers**
 
-* **Decision Boundaries**: Visualizes how the model partitions the input space into different classes.
-* **Training Dynamics**: Dual-axis plots showing loss and accuracy over time to spot overfitting.
-* **Confusion Matrix**: A grid showing exactly which classes are being confused with one another (e.g., mistaking the number 4 for a 9).
+## **1. Spatial & Structural Visualizations**
+
+### **Decision Boundaries**
+This tool reveals how a classifier "thinks" about the input space.
+* **Mechanism**: It creates a dense grid of points (e.g., $200 \times 200$) across the feature range, predicts the class for every single point, and colors the background accordingly.
+* **Insight**: You can see if a model is making simple linear splits (like Softmax) or complex, non-linear "curvy" boundaries (like a Neural Network).
+
+### **PCA (Principal Component Analysis) Suite**
+For high-dimensional data like images (e.g., handwritten digits), these plots help you "see" the data in 2D:
+* **Scree Plot**: Shows how much information (variance) each principal component captures. You look for the "elbow" in the graph to decide how many components are actually necessary.
+* **2D Visualization**: Projects complex data onto two axes. If the "3"s and "8"s cluster near each other but far from "1"s, you know which classes the model will likely struggle to distinguish.
+
+
+
+---
+
+## **2. Performance & Reliability Diagnostics**
+
+### **Training Dynamics**
+This creates a dual-plot or dual-axis view of **Loss** and **Accuracy** over time.
+* **Overfitting Check**: If the training loss continues to drop but the validation loss starts to rise, the model is starting to "memorize" the training data rather than "learning" patterns that generalize.
+
+
+
+### **Confidence vs. Accuracy (Reliability Diagram)**
+Although we didn't use these visualizations, they are critical tools for track B.
+* **Calibration**: A well-calibrated model that says it is "90% confident" should be right exactly 90% of the time.
+* **Visualization**: It bins predictions by confidence and compares them to actual accuracy. If the bars are below the diagonal line, your model is **overconfident**.
+
+### **Confusion Matrix**
+A heatmap showing exactly where the model is failing.
+* **Diagonal**: Represents correct predictions.
+* **Off-diagonal**: High values here indicate specific "confusions" (e.g., the model frequently mistakes "4" for "9").
+
+---
+
+## **3. Experimental Comparison Tools**
+
+### **Optimizer Comparison**
+This plots different training algorithms (SGD, Momentum, Adam) on the same graph. It allows to visually confirm that Adam typically converges much faster than basic SGD.
+
+### **Capacity Ablation**
+This generates a side-by-side comparison of decision boundaries as the "capacity" (hidden width) of the neural network changes.
+* **Small Width**: Results in simple, smoother boundaries (potential underfitting).
+* **Large Width**: Results in highly complex, wiggly boundaries (potential overfitting).
+
+### **Repeated Seed Reporting**
+Since neural networks are sensitive to their random starting weights, this function plots the results of multiple runs with **error bars**. This ensures that if Model A is "better" than Model B, it's a statistically significant lead and not just a "lucky" random initialization.
 
 ---
 
