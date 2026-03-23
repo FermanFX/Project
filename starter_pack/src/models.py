@@ -45,10 +45,8 @@ class SoftmaxRegression:
     
     def _initialize_parameters(self):
         """Initialize weights with small random values."""
-        # TODO: np.random.randn(num_classes, input_dim) * 0.01
-        # TODO: self.W = ...
-        # TODO: self.b = np.zeros((num_classes,))
-        pass
+        self.W = np.random.randn(self.num_classes, self.input_dim) * 0.01
+        self.b = np.zeros((self.num_classes,))
     
     def forward(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -66,10 +64,9 @@ class SoftmaxRegression:
             logits = X @ W.T + b
             probabilities = softmax(logits)
         """
-        # TODO: logits = X @ self.W.T + self.b
-        # TODO: probabilities = softmax_stable(logits)
-        # TODO: return logits, probabilities
-        pass
+        logits = X @ self.W.T + self.b
+        probabilities = softmax_stable(logits)
+        return logits, probabilities
     
     def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -83,10 +80,9 @@ class SoftmaxRegression:
             predicted_labels: (batch_size,) - class indices
             probabilities: (batch_size, num_classes)
         """
-        # TODO: logits, probs = self.forward(X)
-        # TODO: labels = np.argmax(probs, axis=1)
-        # TODO: return labels, probs
-        pass
+        logits, probs = self.forward(X)
+        labels = np.argmax(probs, axis=1)
+        return labels, probs
     
     def backward(self, X: np.ndarray, Y: np.ndarray, P: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -118,12 +114,11 @@ class SoftmaxRegression:
             grad_W: (num_classes, input_dim)
             grad_b: (num_classes,)
         """
-        # TODO: n = X.shape[0]
-        # TODO: dL_dS = (P - Y) / n
-        # TODO: grad_W = dL_dS.T @ X
-        # TODO: grad_b = np.sum(dL_dS, axis=0)
-        # TODO: return grad_W, grad_b
-        pass
+        n = X.shape[0]
+        dL_dS = (P - Y) / n
+        grad_W = dL_dS.T @ X
+        grad_b = np.sum(dL_dS, axis=0)
+        return grad_W, grad_b
     
     def update_parameters(self, grad_W: np.ndarray, grad_b: np.ndarray):
         """
@@ -135,9 +130,8 @@ class SoftmaxRegression:
             grad_W: Gradient of W (num_classes, input_dim)
             grad_b: Gradient of b (num_classes,)
         """
-        # TODO: self.W = self.W - self.learning_rate * grad_W
-        # TODO: self.b = self.b - self.learning_rate * grad_b
-        pass
+        self.W = self.W - self.learning_rate * grad_W
+        self.b = self.b - self.learning_rate * grad_b
     
     def compute_loss(self, X: np.ndarray, Y: np.ndarray, P: np.ndarray) -> float:
         """
@@ -153,11 +147,10 @@ class SoftmaxRegression:
         Returns:
             Mean loss (scalar)
         """
-        # TODO: n = X.shape[0]
-        # TODO: cross_ent = -np.mean(np.sum(Y * np.log(P + 1e-9), axis=1))
-        # TODO: reg_term = 0.5 * self.reg_lambda * (np.sum(self.W**2) + np.sum(self.b**2))
-        # TODO: return cross_ent + reg_term
-        pass
+        n = X.shape[0]
+        cross_ent = -np.mean(np.sum(Y * np.log(P + 1e-9), axis=1))
+        reg_term = 0.5 * self.reg_lambda * (np.sum(self.W**2) + np.sum(self.b**2))
+        return cross_ent + reg_term
 
 
 class OneHiddenLayerNN:
@@ -207,11 +200,10 @@ class OneHiddenLayerNN:
     
     def _initialize_parameters(self):
         """Initialize all weight matrices with Xavier/He initialization."""
-        # TODO: self.W1 = np.random.randn(hidden_dim, input_dim) * np.sqrt(2.0/input_dim)
-        # TODO: self.b1 = np.zeros((hidden_dim,))
-        # TODO: self.W2 = np.random.randn(num_classes, hidden_dim) * np.sqrt(2.0/hidden_dim)
-        # TODO: self.b2 = np.zeros((num_classes,))
-        pass
+        self.W1 = np.random.randn(self.hidden_dim, self.input_dim) * np.sqrt(2.0/self.input_dim)
+        self.b1 = np.zeros((self.hidden_dim,))
+        self.W2 = np.random.randn(self.num_classes, self.hidden_dim) * np.sqrt(2.0/self.hidden_dim)
+        self.b2 = np.zeros((self.num_classes,))
     
     def forward(self, X: np.ndarray) -> Dict[str, np.ndarray]:
         """
@@ -233,12 +225,11 @@ class OneHiddenLayerNN:
             S = H @ W2.T + b2
             P = softmax(S)
         """
-        # TODO: Z1 = X @ self.W1.T + self.b1
-        # TODO: H = tanh(Z1)
-        # TODO: S = H @ self.W2.T + self.b2
-        # TODO: P = softmax_stable(S)
-        # TODO: return {'Z1': Z1, 'H': H, 'S': S, 'P': P}
-        pass
+        Z1 = X @ self.W1.T + self.b1
+        H = tanh_activation(Z1)
+        S = H @ self.W2.T + self.b2
+        P = softmax_stable(S)
+        return {'Z1': Z1, 'H': H, 'S': S, 'P': P}
     
     def predict(self, X: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
@@ -250,10 +241,9 @@ class OneHiddenLayerNN:
         Returns:
             Tuple of (predicted_labels, probabilities)
         """
-        # TODO: cache = self.forward(X)
-        # TODO: labels = np.argmax(cache['P'], axis=1)
-        # TODO: return labels, cache['P']
-        pass
+        cache = self.forward(X)
+        labels = np.argmax(cache['P'], axis=1)
+        return labels, cache['P']
     
     def backward(self, X: np.ndarray, Y: np.ndarray, cache: Dict[str, np.ndarray]) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
@@ -308,31 +298,30 @@ class OneHiddenLayerNN:
         # ============================================
         # STEP 1: Output sensitivity ∂L/∂S
         # ============================================
-        # TODO: n = X.shape[0]
-        # TODO: dL_dS = (cache['P'] - Y) / n
+        n = X.shape[0]
+        dL_dS = (cache['P'] - Y) / n
         
         # ============================================
         # STEP 2: Gradients for W2 and b2
         # ============================================
-        # TODO: grad_W2 = dL_dS.T @ cache['H']
-        # TODO: grad_b2 = np.sum(dL_dS, axis=0)
+        grad_W2 = dL_dS.T @ cache['H']
+        grad_b2 = np.sum(dL_dS, axis=0)
         
         # ============================================
         # STEP 3: Backpropagate to hidden layer ∂L/∂Z1
         # ============================================
         # This is the key backpropagation step!
-        # TODO: dL_dH = dL_dS @ self.W2                          [Shape: (n, h)]
-        # TODO: dL_dZ1 = dL_dH * tanh_derivative(cache['H'])      [Shape: (n, h)]
+        dL_dH = dL_dS @ self.W2                          # [Shape: (n, h)]
+        dL_dZ1 = dL_dH * tanh_derivative(cache['H'])      # [Shape: (n, h)]
         #       # tanh_derivative(H) = 1 - H²
         
         # ============================================
         # STEP 4: Gradients for W1 and b1
         # ============================================
-        # TODO: grad_W1 = dL_dZ1.T @ X
-        # TODO: grad_b1 = np.sum(dL_dZ1, axis=0)
+        grad_W1 = dL_dZ1.T @ X
+        grad_b1 = np.sum(dL_dZ1, axis=0)
         
-        # TODO: return grad_W1, grad_b1, grad_W2, grad_b2
-        pass
+        return grad_W1, grad_b1, grad_W2, grad_b2
     
     def update_parameters(self, grad_W1, grad_b1, grad_W2, grad_b2):
         """
@@ -346,11 +335,10 @@ class OneHiddenLayerNN:
             grad_W2: Gradient of W2 (num_classes, hidden_dim)
             grad_b2: Gradient of b2 (num_classes,)
         """
-        # TODO: self.W1 = self.W1 - self.learning_rate * grad_W1
-        # TODO: self.b1 = self.b1 - self.learning_rate * grad_b1
-        # TODO: self.W2 = self.W2 - self.learning_rate * grad_W2
-        # TODO: self.b2 = self.b2 - self.learning_rate * grad_b2
-        pass
+        self.W1 = self.W1 - self.learning_rate * grad_W1
+        self.b1 = self.b1 - self.learning_rate * grad_b1
+        self.W2 = self.W2 - self.learning_rate * grad_W2
+        self.b2 = self.b2 - self.learning_rate * grad_b2
     
     def compute_loss(self, Y: np.ndarray, P: np.ndarray, reg_term: float = 0) -> float:
         """
@@ -366,10 +354,9 @@ class OneHiddenLayerNN:
         Returns:
             Mean loss (scalar)
         """
-        # TODO: n = Y.shape[0]
-        # TODO: cross_ent = -np.mean(np.sum(Y * np.log(P + 1e-9), axis=1))
-        # TODO: return cross_ent + reg_term
-        pass
+        n = Y.shape[0]
+        cross_ent = -np.mean(np.sum(Y * np.log(P + 1e-9), axis=1))
+        return cross_ent + reg_term
 
 
 def softmax_stable(logits: np.ndarray) -> np.ndarray:
@@ -392,11 +379,10 @@ def softmax_stable(logits: np.ndarray) -> np.ndarray:
     Returns:
         Probabilities summing to 1 per row
     """
-    # TODO: shifted = logits - np.max(logits, axis=1, keepdims=True)
-    # TODO: exp_logits = np.exp(shifted)
-    # TODO: probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
-    # TODO: return probs
-    pass
+    shifted = logits - np.max(logits, axis=1, keepdims=True)
+    exp_logits = np.exp(shifted)
+    probs = exp_logits / np.sum(exp_logits, axis=1, keepdims=True)
+    return probs
 
 
 def tanh_activation(Z: np.ndarray) -> np.ndarray:
@@ -416,8 +402,7 @@ def tanh_activation(Z: np.ndarray) -> np.ndarray:
     Returns:
         Activated values in range (-1, 1)
     """
-    # TODO: return np.tanh(Z)
-    pass
+    return np.tanh(Z)
 
 
 def tanh_derivative(H: np.ndarray) -> np.ndarray:
@@ -450,5 +435,4 @@ def tanh_derivative(H: np.ndarray) -> np.ndarray:
         # 1 - 0.5² = 1 - 0.25 = 0.75
         # 1 - (-0.5)² = 1 - 0.25 = 0.75
     """
-    # TODO: return 1 - H**2
-    pass
+    return 1 - H**2
