@@ -58,7 +58,7 @@ DEFAULTS = {
 
 def setup_directories():
     """Create necessary output directories."""
-    dirs = ['figures', 'results']
+    dirs = ['starter_pack/figures', 'starter_pack/results']
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
@@ -343,7 +343,7 @@ def run_synthetic_experiment(
     
     plt.suptitle(f'Decision Boundaries: {name}', fontsize=16)
     plt.tight_layout()
-    plt.savefig(f'figures/decision_boundary_{name}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'starter_pack/figures/decision_boundary_{name}.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     # Training dynamics
@@ -352,7 +352,7 @@ def run_synthetic_experiment(
     plot_training_dynamics(softmax_history, title='Softmax Training', ax=axes[0])
     plot_training_dynamics(nn_history, title='NN Training', ax=axes[1])
     
-    plt.savefig(f'figures/training_dynamics_{name}.png', dpi=150, bbox_inches='tight')
+    plt.savefig(f'starter_pack/figures/training_dynamics_{name}.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     return results
@@ -446,7 +446,7 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     fig, axes = plt.subplots(1, 2, figsize=(14, 5))
     plot_training_dynamics(softmax_history, title='Softmax on Digits', ax=axes[0])
     plot_training_dynamics(nn_history, title='NN on Digits', ax=axes[1])
-    plt.savefig('figures/training_dynamics_digits.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/training_dynamics_digits.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     # Repeated-seed evaluation
@@ -553,7 +553,7 @@ def run_optimizer_study(digits_data):
         print(f"{opt_name} - Final Val Acc: {history.val_accuracies[-1]:.4f}")
     
     plot_optimizer_comparison(histories, title='Optimizer Comparison on Digits')
-    plt.savefig('figures/optimizer_comparison.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/optimizer_comparison.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     return histories
@@ -618,7 +618,7 @@ def run_capacity_ablation(moons_data):
     
     plt.suptitle('Capacity Ablation: Decision Boundaries', fontsize=16)
     plt.tight_layout()
-    plt.savefig('figures/capacity_ablation_boundaries.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/capacity_ablation_boundaries.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     # Loss curves
@@ -633,7 +633,7 @@ def run_capacity_ablation(moons_data):
     
     plt.suptitle('Capacity Ablation: Training Curves', fontsize=16)
     plt.tight_layout()
-    plt.savefig('figures/capacity_ablation_curves.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/capacity_ablation_curves.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     return histories, models
@@ -664,13 +664,13 @@ def run_track_a(digits_data):
     eigenvalues = S ** 2 / (len(S) - 1)
     
     plot_pca_scree(eigenvalues, title='PCA Scree Plot (Digits)')
-    plt.savefig('figures/track_a_scree.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/track_a_scree.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     # 2D PCA visualization
     X_pca_2d = U[:, :2] * S[:2]
     plot_pca_2d(X_pca_2d, y, title='PCA 2D Visualization (Digits)')
-    plt.savefig('figures/track_a_pca2d.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/track_a_pca2d.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     # Classification at different PCA dimensions
@@ -748,7 +748,7 @@ def run_track_b(digits_data):
                   f"{b['accuracy']:<10.4f} {b['count']:<8}")
         
         plot_confidence_vs_accuracy(conf_bins, title=f'{name}: Confidence vs Accuracy')
-        plt.savefig(f'figures/track_b_confidence_{name.lower()}.png', dpi=150, bbox_inches='tight')
+        plt.savefig(f'starter_pack/figures/track_b_confidence_{name.lower()}.png', dpi=150, bbox_inches='tight')
         plt.show()
     
     # Correct vs Incorrect analysis
@@ -823,7 +823,7 @@ def run_failure_case_analysis(moons_data):
     
     plt.suptitle('Failure Case: Under-Capacity Network', fontsize=16)
     plt.tight_layout()
-    plt.savefig('figures/failure_case_undercapacity.png', dpi=150, bbox_inches='tight')
+    plt.savefig('starter_pack/figures/failure_case_undercapacity.png', dpi=150, bbox_inches='tight')
     plt.show()
     
     return history, metrics
