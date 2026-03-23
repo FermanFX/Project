@@ -4,6 +4,8 @@ from dataclasses import dataclass
 import json
 
 from .models import SoftmaxRegression, OneHiddenLayerNN
+from .trainer import Trainer
+from .optimizers import SGD
 
 
 @dataclass
@@ -66,16 +68,17 @@ class RepeatedSeedResult:
         
         For n=5: t_{0.975, 4} = 2.776
         """
-        # TODO: n = len(self.accuracies)
-        # TODO: t_crit = 2.776 (for n=5, 95% CI)
-        # TODO: se = self.std_accuracy / np.sqrt(n)
-        # TODO: return (self.mean_accuracy - t_crit * se, self.mean_accuracy + t_crit * se)
-        pass
+        n = len(self.accuracies)
+        t_crit = 2.776  # for n=5, 95% CI
+        se = self.std_accuracy / np.sqrt(n)
+        return (self.mean_accuracy - t_crit * se, self.mean_accuracy + t_crit * se)
     
     @property
     def ci_95_loss(self) -> Tuple[float, float]:
-        # TODO: Same as ci_95_accuracy but for losses
-        pass
+        n = len(self.losses)
+        t_crit = 2.776  # for n=5, 95% CI
+        se = self.std_loss / np.sqrt(n)
+        return (self.mean_loss - t_crit * se, self.mean_loss + t_crit * se)
     
     def summary(self) -> str:
         return (
@@ -106,13 +109,12 @@ class Evaluator:
         Returns:
             Probability matrix (n_samples, n_classes)
         """
-        # TODO: if isinstance(model, SoftmaxRegression):
-        # TODO:     _, P = model.forward(X)
-        # TODO: else:
-        # TODO:     cache = model.forward(X)
-        # TODO:     P = cache['P']
-        # TODO: return P
-        pass
+        if isinstance(model, SoftmaxRegression):
+            _, P = model.forward(X)
+        else:
+            cache = model.forward(X)
+            P = cache['P']
+        return P
     
     def predict(self, model, X: np.ndarray) -> np.ndarray:
         """
@@ -125,9 +127,8 @@ class Evaluator:
         Returns:
             Predicted labels (n_samples,)
         """
-        # TODO: P = self.predict_proba(model, X)
-        # TODO: return np.argmax(P, axis=1)
-        pass
+        P = self.predict_proba(model, X)
+        return np.argmax(P, axis=1)
     
     def compute_metrics(
         self,
@@ -145,21 +146,25 @@ class Evaluator:
             - confidence: mean of max probabilities
             - entropy: mean predictive entropy
         """
-        # TODO: P = self.predict_proba(model, X)
-        # TODO: y_pred = np.argmax(P, axis=1)
+        P = self.predict_proba(model, X)
+        y_pred = np.argmax(P, axis=1)
         
-        # TODO: accuracy = np.mean(y_pred == y)
+        accuracy = np.mean(y_pred == y)
         
-        # TODO: n = len(y)
-        # TODO: eps = 1e-9
-        # TODO: cross_ent = -np.mean(np.log(P[np.arange(n), y] + eps))
+        n = len(y)
+        eps = 1e-9
+        cross_ent = -np.mean(np.log(P[np.arange(n), y] + eps))
         
-        # TODO: confidence = np.mean(np.max(P, axis=1))
+        confidence = np.mean(np.max(P, axis=1))
         
-        # TODO: entropy = -np.mean(np.sum(P * np.log(P + eps), axis=1))
+        entropy = -np.mean(np.sum(P * np.log(P + eps), axis=1))
         
-        # TODO: return {...}
-        pass
+        return {
+            'accuracy': accuracy,
+            'cross_entropy': cross_ent,
+            'confidence': confidence,
+            'entropy': entropy
+        }
     
     def confidence_by_bin(
         self,
@@ -191,20 +196,28 @@ class Evaluator:
             [{'bin': 1, 'conf_range': (0, 0.2), 'mean_confidence': 0.1, 
               'accuracy': 0.15, 'count': 50}, ...]
         """
-        # TODO: P = self.predict_proba(model, X)
-        # TODO: max_probs = np.max(P, axis=1)
-        # TODO: y_pred = np.argmax(P, axis=1)
-        # TODO: correct = (y_pred == y)
+        P = self.predict_proba(model, X)
+        max_probs = np.max(P, axis=1)
+        y_pred = np.argmax(P, axis=1)
+        correct = (y_pred == y)
         
-        # TODO: bin_edges = np.linspace(0, 1, n_bins + 1)
+        bin_edges = np.linspace(0, 1, n_bins + 1)
         
-        # TODO: results = []
-        # TODO: for i in range(n_bins):
-        # TODO:     mask = (max_probs >= bin_edges[i]) & (max_probs < bin_edges[i+1])
-        # TODO:     if np.sum(mask) > 0:
-        # TODO:         results.append({...})
-        # TODO: return results
-        pass
+        results = []
+        for i in range(n_bins):
+            mask = (max_probs >= bin_edges[i]) & (max_probs < bin_edges[i+1])
+            if np.sum(mask) > 0:
+                bin_conf = np.mean(max_probs[mask])
+                bin_acc = np.mean(correct[mask])
+                count = np.sum(mask)
+                results.append({
+                    'bin': i+1,
+                    'conf_range': (bin_edges[i], bin_edges[i+1]),
+                    'mean_confidence': bin_conf,
+                    'accuracy': bin_acc,
+                    'count': count
+                })
+        return results
     
     def repeated_seed_evaluation(
         self,
@@ -249,19 +262,27 @@ class Evaluator:
         losses = []
         
         for seed in seeds:
-            pass
-            # # TODO: np.random.seed(seed)
-            # 
-            # # TODO: model = model_class(**model_kwargs)
-            # 
-            # # TODO: Create trainer with appropriate optimizer
-            # 
-            # # TODO: trainer.train(X_train, y_train, X_val, y_val)
-            # 
-            # # TODO: metrics = self.compute_metrics(model, X_test, y_test)
-            # 
-            # # TODO: accuracies.append(metrics['accuracy'])
-            # # TODO: losses.append(metrics['cross_entropy'])
+            np.random.seed(seed)
+            
+            model = model_class(**model_kwargs)
+            
+            # Create optimizer
+            if optimizer_class is None:
+                optimizer = SGD(lr=model.learning_rate)
+            else:
+                optimizer = optimizer_class(**optimizer_kwargs)
+            
+            # Create trainer
+            trainer = Trainer(model, optimizer, epochs=epochs, batch_size=batch_size, verbose=False)
+            
+            # Train
+            trainer.train(X_train, y_train, X_val, y_val)
+            
+            # Evaluate
+            metrics = self.compute_metrics(model, X_test, y_test)
+            
+            accuracies.append(metrics['accuracy'])
+            losses.append(metrics['cross_entropy'])
         
         return RepeatedSeedResult(
             model_name=model_kwargs.get('num_classes', 'NN'),
@@ -300,23 +321,65 @@ def gradient_check(
     Returns:
         True if gradients are correct (relative error < 1e-5)
     """
-    # TODO: cache = model.forward(X)
-    # TODO: grads = model.backward(X, Y, cache['P'] if dict else cache[1])
+    cache = model.forward(X)
+    if isinstance(model, SoftmaxRegression):
+        P = cache[1]
+        grads = model.backward(X, Y, P)
+        params = [model.W, model.b]
+        grad_list = list(grads)
+    else:  # OneHiddenLayerNN
+        P = cache['P']
+        grads = model.backward(X, Y, cache)
+        params = [model.W1, model.b1, model.W2, model.b2]
+        grad_list = list(grads)
     
-    # TODO: for each parameter:
-    # TODO:     for each element:
-    # TODO:         param[i,j] += epsilon
-    # TODO:         loss_high = forward_pass_loss(...)
-    # TODO:         param[i,j] -= 2*epsilon
-    # TODO:         loss_low = forward_pass_loss(...)
-    # TODO:         param[i,j] += epsilon
-    # TODO:         
-    # TODO:         num_grad = (loss_high - loss_low) / (2*epsilon)
-    # TODO:         ana_grad = analytical_grad[i,j]
-    # TODO:         rel_error = |num - ana| / (|num| + |ana| + eps)
+    def loss_fn():
+        if isinstance(model, SoftmaxRegression):
+            _, P_local = model.forward(X)
+            return model.compute_loss(X, Y, P_local)
+        else:
+            cache_local = model.forward(X)
+            P_local = cache_local['P']
+            reg_term = 0.5 * model.reg_lambda * (
+                np.sum(model.W1**2) + np.sum(model.b1**2) + 
+                np.sum(model.W2**2) + np.sum(model.b2**2)
+            )
+            return model.compute_loss(Y, P_local, reg_term)
     
-    # TODO: return True if all rel_error < 1e-5
-    pass
+    all_correct = True
+    for param, grad in zip(params, grad_list):
+        for i in range(param.shape[0]):
+            for j in range(param.shape[1]):
+                # Save original value
+                orig = param[i, j]
+                
+                # Loss at +epsilon
+                param[i, j] = orig + epsilon
+                loss_high = loss_fn()
+                
+                # Loss at -epsilon
+                param[i, j] = orig - epsilon
+                loss_low = loss_fn()
+                
+                # Restore
+                param[i, j] = orig
+                
+                # Numerical gradient
+                num_grad = (loss_high - loss_low) / (2 * epsilon)
+                ana_grad = grad[i, j]
+                
+                # Relative error
+                rel_error = abs(num_grad - ana_grad) / (abs(num_grad) + abs(ana_grad) + 1e-9)
+                
+                if rel_error > 1e-5:
+                    if verbose:
+                        print(f"Gradient check failed at param[{i},{j}]: num={num_grad:.6f}, ana={ana_grad:.6f}, rel_err={rel_error:.6f}")
+                    all_correct = False
+    
+    if verbose and all_correct:
+        print("All gradients passed numerical check!")
+    
+    return all_correct
 
 
 def check_probability_sum(P: np.ndarray, eps: float = 1e-6) -> bool:
@@ -332,10 +395,9 @@ def check_probability_sum(P: np.ndarray, eps: float = 1e-6) -> bool:
     Returns:
         True if all rows sum to 1 (within tolerance)
     """
-    # TODO: sums = np.sum(P, axis=1)
-    # TODO: all_one = np.allclose(sums, 1.0, atol=eps)
-    # TODO: return all_one
-    pass
+    sums = np.sum(P, axis=1)
+    all_one = np.allclose(sums, 1.0, atol=eps)
+    return all_one
 
 
 def check_nan_inf(model, X: np.ndarray) -> bool:
@@ -357,14 +419,16 @@ def check_nan_inf(model, X: np.ndarray) -> bool:
     Returns:
         True if no NaN/Inf found (model is healthy)
     """
-    # TODO: cache = model.forward(X)
+    cache = model.forward(X)
     
-    # TODO: if dict:
-    # TODO:     for key, val in cache.items():
-    # TODO:         check np.isnan(val) and np.isinf(val)
-    # TODO: else:
-    # TODO:     for val in cache:
-    # TODO:         check np.isnan and np.isinf
+    if isinstance(model, SoftmaxRegression):
+        logits, P = cache
+        arrays = [logits, P]
+    else:  # OneHiddenLayerNN
+        arrays = list(cache.values())
     
-    # TODO: return True if healthy
-    pass
+    for arr in arrays:
+        if np.any(np.isnan(arr)) or np.any(np.isinf(arr)):
+            return False
+    
+    return True
