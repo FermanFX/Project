@@ -55,24 +55,16 @@ class SGD(Optimizer):
         For Neural Network:
             grads = {'W1': grad_W1, 'b1': grad_b1, 'W2': grad_W2, 'b2': grad_b2}
         """
-        # ============================================
-        # TODO: For each parameter in grads:
-        #       param = param - learning_rate * gradient
-        # ============================================
-        
         if hasattr(model, 'W') and 'W' in grads:
-            # TODO: model.W = model.W - self.learning_rate * grads['W']
-            pass
+            model.W = model.W - self.learning_rate * grads['W']
         if hasattr(model, 'b') and 'b' in grads:
-            # TODO: model.b = model.b - self.learning_rate * grads['b']
-            pass
+            model.b = model.b - self.learning_rate * grads['b']
         
         if hasattr(model, 'W1') and 'W1' in grads:
-            # TODO: model.W1 = model.W1 - self.learning_rate * grads['W1']
-            # TODO: model.b1 = model.b1 - self.learning_rate * grads['b1']
-            # TODO: model.W2 = model.W2 - self.learning_rate * grads['W2']
-            # TODO: model.b2 = model.b2 - self.learning_rate * grads['b2']
-            pass
+            model.W1 = model.W1 - self.learning_rate * grads['W1']
+            model.b1 = model.b1 - self.learning_rate * grads['b1']
+            model.W2 = model.W2 - self.learning_rate * grads['W2']
+            model.b2 = model.b2 - self.learning_rate * grads['b2']
 
 
 class Momentum(Optimizer):
@@ -102,7 +94,6 @@ class Momentum(Optimizer):
     def __init__(self, learning_rate: float = 0.05, momentum: float = 0.9):
         super().__init__(learning_rate)
         self.momentum = momentum
-        # TODO: Initialize velocity dictionaries (for each parameter)
         self.velocity: Dict[str, np.ndarray] = {}
     
     def step(self, model, grads: Dict[str, np.ndarray]):
@@ -118,23 +109,15 @@ class Momentum(Optimizer):
             model: Model with parameters
             grads: Dictionary of gradients
         """
-        # ============================================
-        # TODO: For each parameter:
-        #       1. Initialize velocity if not exists
-        #       2. v = momentum * v + gradient
-        #       3. θ = θ - lr * v
-        # ============================================
-        
         for param_name, grad in grads.items():
-            # TODO: if param_name not in velocity, initialize with zeros
-            # TODO: velocity[param_name] = momentum * velocity[param_name] + grad
-            # TODO: model parameter = model parameter - lr * velocity[param_name]
-            pass
+            if param_name not in self.velocity:
+                self.velocity[param_name] = np.zeros_like(grad)
+            self.velocity[param_name] = self.momentum * self.velocity[param_name] + grad
+            setattr(model, param_name, getattr(model, param_name) - self.learning_rate * self.velocity[param_name])
     
     def reset(self):
         """Reset velocity for new training."""
-        # TODO: self.velocity = {}
-        pass
+        self.velocity = {}
 
 
 class Adam(Optimizer):
@@ -178,11 +161,9 @@ class Adam(Optimizer):
         self.eps = eps
         
         # First moment estimates (like velocity in momentum)
-        # TODO: Initialize m dictionary
         self.m: Dict[str, np.ndarray] = {}
         
         # Second moment estimates (like adaptive learning rate)
-        # TODO: Initialize v dictionary
         self.v: Dict[str, np.ndarray] = {}
         
         self.t = 0  # timestep
@@ -207,41 +188,41 @@ class Adam(Optimizer):
         self.t += 1
         
         for param_name, grad in grads.items():
-            # TODO: Initialize m[param_name] and v[param_name] if not exists
+            if param_name not in self.m:
+                self.m[param_name] = np.zeros_like(grad)
+                self.v[param_name] = np.zeros_like(grad)
             
             # ============================================
             # UPDATE FIRST MOMENT (m_t)
             # m_t = β₁ * m_{t-1} + (1 - β₁) * ∇L
             # ============================================
-            # TODO: self.m[param_name] = self.beta1 * self.m[param_name] + (1 - self.beta1) * grad
+            self.m[param_name] = self.beta1 * self.m[param_name] + (1 - self.beta1) * grad
             
             # ============================================
             # UPDATE SECOND MOMENT (v_t)
             # v_t = β₂ * v_{t-1} + (1 - β₂) * (∇L)²
             # ============================================
-            # TODO: self.v[param_name] = self.beta2 * self.v[param_name] + (1 - self.beta2) * (grad ** 2)
+            self.v[param_name] = self.beta2 * self.v[param_name] + (1 - self.beta2) * (grad ** 2)
             
             # ============================================
             # BIAS CORRECTION
             # m_hat = m_t / (1 - β₁ᵗ)
             # v_hat = v_t / (1 - β₂ᵗ)
             # ============================================
-            # TODO: m_hat = self.m[param_name] / (1 - self.beta1 ** self.t)
-            # TODO: v_hat = self.v[param_name] / (1 - self.beta2 ** self.t)
+            m_hat = self.m[param_name] / (1 - self.beta1 ** self.t)
+            v_hat = self.v[param_name] / (1 - self.beta2 ** self.t)
             
             # ============================================
             # UPDATE PARAMETER
             # θ = θ - lr * m_hat / (√v_hat + ε)
             # ============================================
-            # TODO: model parameter = model parameter - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps)
-            pass
+            setattr(model, param_name, getattr(model, param_name) - self.learning_rate * m_hat / (np.sqrt(v_hat) + self.eps))
     
     def reset(self):
         """Reset optimizer state."""
-        # TODO: self.m = {}
-        # TODO: self.v = {}
-        # TODO: self.t = 0
-        pass
+        self.m = {}
+        self.v = {}
+        self.t = 0
 
 
 def create_optimizer(name: str, learning_rate: float = 0.05, **kwargs) -> Optimizer:
@@ -269,8 +250,9 @@ def create_optimizer(name: str, learning_rate: float = 0.05, **kwargs) -> Optimi
         momentum = kwargs.get('momentum', 0.9)
         return Momentum(learning_rate=learning_rate, momentum=momentum)
     elif name == 'adam':
-        # TODO: Extract beta1, beta2, eps from kwargs if provided
-        # TODO: return Adam(learning_rate, beta1, beta2, eps)
-        pass
+        beta1 = kwargs.get('beta1', 0.9)
+        beta2 = kwargs.get('beta2', 0.999)
+        eps = kwargs.get('eps', 1e-8)
+        return Adam(learning_rate, beta1, beta2, eps)
     else:
         raise ValueError(f"Unknown optimizer: {name}")
