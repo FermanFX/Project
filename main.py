@@ -37,6 +37,7 @@ from starter_pack.src.visualization import (
     plot_repeated_seed_results,
     plot_pca_scree,
     plot_pca_2d,
+    plot_confusion_matrix,
     save_results_table
 )
 
@@ -449,6 +450,40 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     plt.tight_layout()
     plt.savefig('starter_pack/figures/training_dynamics_digits.png', dpi=150, bbox_inches='tight')
     plt.show()
+
+    # ADD CONFUSION MATRICES
+    print("\nPlotting confusion matrices...")
+
+    # Get predictions
+    softmax_preds = evaluator.predict(softmax_model, X_test)
+    nn_preds = evaluator.predict(nn_model, X_test)
+
+    # Plot confusion matrix for Softmax
+    fig = plot_confusion_matrix(
+        y_test, softmax_preds,
+        classes=[str(i) for i in range(10)],
+        title='Softmax Regression: Confusion Matrix (Digits)'
+    )
+    plt.savefig('starter_pack/figures/confusion_matrix_softmax.png', dpi=150, bbox_inches='tight')
+    plt.show()
+
+    # Plot confusion matrix for Neural Network
+    fig = plot_confusion_matrix(
+        y_test, nn_preds,
+        classes=[str(i) for i in range(10)],
+        title='Neural Network: Confusion Matrix (Digits)'
+    )
+    plt.savefig('starter_pack/figures/confusion_matrix_nn.png', dpi=150, bbox_inches='tight')
+    plt.show()
+
+    # Optionally, print confusion matrix stats
+    from sklearn.metrics import confusion_matrix
+    cm_softmax = confusion_matrix(y_test, softmax_preds)
+    cm_nn = confusion_matrix(y_test, nn_preds)
+
+    print("\nConfusion Matrix Analysis:")
+    print(f"Softmax - Most confused digit pair: {np.unravel_index(np.argmax(cm_softmax - np.diag(np.diag(cm_softmax))), cm_softmax.shape)}")
+    print(f"NN - Most confused digit pair: {np.unravel_index(np.argmax(cm_nn - np.diag(np.diag(cm_nn))), cm_nn.shape)}")
 
     # Repeated-seed evaluation
     print("\nRunning repeated-seed evaluation (5 seeds)...")
