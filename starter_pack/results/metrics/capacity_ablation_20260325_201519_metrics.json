@@ -1,0 +1,15 @@
+{
+  "run_id": "20260325_201519",
+  "experiment": "capacity_ablation",
+  "config": {
+    "ablation_type": "hidden_width",
+    "hidden_widths": [
+      2,
+      8,
+      32
+    ]
+  },
+  "history": [],
+  "final_metrics": {},
+  "timestamp": "2026-03-25T20:15:22.933993"
+}

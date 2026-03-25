@@ -1,0 +1,8 @@
+2026-03-25 20:15:22 - INFO - ============================================================
+2026-03-25 20:15:22 - INFO - Experiment: optimizer_study
+2026-03-25 20:15:22 - INFO - Run ID: 20260325_201522
+2026-03-25 20:15:22 - INFO - ============================================================
+2026-03-25 20:15:22 - INFO - Configuration:
+2026-03-25 20:15:22 - INFO -   ablation_type: optimizer_comparison
+2026-03-25 20:15:22 - INFO -   optimizers: ['SGD', 'Momentum', 'Adam']
+2026-03-25 20:15:26 - INFO - Metrics saved to starter_pack/results\metrics\optimizer_study_20260325_201522_metrics.json

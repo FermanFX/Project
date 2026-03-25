@@ -1,0 +1,8 @@
+2026-03-25 20:19:32 - INFO - ============================================================
+2026-03-25 20:19:32 - INFO - Experiment: capacity_ablation
+2026-03-25 20:19:32 - INFO - Run ID: 20260325_201932
+2026-03-25 20:19:32 - INFO - ============================================================
+2026-03-25 20:19:32 - INFO - Configuration:
+2026-03-25 20:19:32 - INFO -   ablation_type: hidden_width
+2026-03-25 20:19:32 - INFO -   hidden_widths: [2, 8, 32]
+2026-03-25 20:19:36 - INFO - Metrics saved to starter_pack/results\metrics\capacity_ablation_20260325_201932_metrics.json
