@@ -1,0 +1,12 @@
+{
+  "run_id": "20260325_191803",
+  "experiment": "track_b_confidence",
+  "config": {
+    "track": "b",
+    "analysis": "confidence_reliability",
+    "n_bins": 5
+  },
+  "history": [],
+  "final_metrics": {},
+  "timestamp": "2026-03-25T19:18:20.665787"
+}

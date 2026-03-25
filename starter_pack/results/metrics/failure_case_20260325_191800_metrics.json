@@ -1,0 +1,19 @@
+{
+  "run_id": "20260325_191800",
+  "experiment": "failure_case",
+  "config": {
+    "failure_type": "undercapacity",
+    "hidden_width": 1
+  },
+  "history": [],
+  "final_metrics": {
+    "undercapacity_model": {
+      "model": "undercapacity_model",
+      "seed": 42,
+      "test_loss": 0.2824688674204808,
+      "test_acc": 0.85,
+      "timestamp": "2026-03-25T19:18:03.360564"
+    }
+  },
+  "timestamp": "2026-03-25T19:18:03.362576"
+}

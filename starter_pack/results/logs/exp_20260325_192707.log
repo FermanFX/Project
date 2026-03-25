@@ -1,0 +1,21 @@
+2026-03-25 19:27:07 - INFO - ============================================================
+2026-03-25 19:27:07 - INFO - Experiment: linear_gaussian
+2026-03-25 19:27:07 - INFO - Run ID: 20260325_192707
+2026-03-25 19:27:07 - INFO - ============================================================
+2026-03-25 19:27:07 - INFO - Configuration:
+2026-03-25 19:27:07 - INFO -   dataset: linear_gaussian
+2026-03-25 19:27:07 - INFO -   epochs: 200
+2026-03-25 19:27:07 - INFO -   hidden_width: 8
+2026-03-25 19:27:07 - INFO -   batch_size: 64
+2026-03-25 19:27:07 - INFO -   lr_softmax: 0.05
+2026-03-25 19:27:07 - INFO -   lr_sgd: 0.05
+2026-03-25 19:27:07 - INFO -   reg_lambda: 0.0001
+2026-03-25 19:27:07 - INFO - Final Results - SOFTMAX
+2026-03-25 19:27:07 - INFO -   Seed: 42
+2026-03-25 19:27:07 - INFO -   Test Loss: 0.1539
+2026-03-25 19:27:07 - INFO -   Test Accuracy: 0.9500
+2026-03-25 19:27:07 - INFO - Final Results - NN
+2026-03-25 19:27:07 - INFO -   Seed: 42
+2026-03-25 19:27:07 - INFO -   Test Loss: 0.1620
+2026-03-25 19:27:07 - INFO -   Test Accuracy: 0.9500
+2026-03-25 19:27:11 - INFO - Metrics saved to starter_pack/results\metrics\linear_gaussian_20260325_192707_metrics.json

@@ -1,0 +1,12 @@
+2026-03-25 19:18:00 - INFO - ============================================================
+2026-03-25 19:18:00 - INFO - Experiment: failure_case
+2026-03-25 19:18:00 - INFO - Run ID: 20260325_191800
+2026-03-25 19:18:00 - INFO - ============================================================
+2026-03-25 19:18:00 - INFO - Configuration:
+2026-03-25 19:18:00 - INFO -   failure_type: undercapacity
+2026-03-25 19:18:00 - INFO -   hidden_width: 1
+2026-03-25 19:18:03 - INFO - Final Results - UNDERCAPACITY_MODEL
+2026-03-25 19:18:03 - INFO -   Seed: 42
+2026-03-25 19:18:03 - INFO -   Test Loss: 0.2825
+2026-03-25 19:18:03 - INFO -   Test Accuracy: 0.8500
+2026-03-25 19:18:03 - INFO - Metrics saved to starter_pack/results\metrics\failure_case_20260325_191800_metrics.json

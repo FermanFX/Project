@@ -1,0 +1,22 @@
+2026-03-25 19:29:41 - INFO - ============================================================
+2026-03-25 19:29:41 - INFO - Experiment: digits
+2026-03-25 19:29:41 - INFO - Run ID: 20260325_192941
+2026-03-25 19:29:41 - INFO - ============================================================
+2026-03-25 19:29:41 - INFO - Configuration:
+2026-03-25 19:29:41 - INFO -   dataset: digits
+2026-03-25 19:29:41 - INFO -   epochs: 200
+2026-03-25 19:29:41 - INFO -   hidden_width: 32
+2026-03-25 19:29:41 - INFO -   batch_size: 64
+2026-03-25 19:29:41 - INFO -   lr_softmax: 0.05
+2026-03-25 19:29:41 - INFO -   lr_sgd: 0.05
+2026-03-25 19:29:41 - INFO -   reg_lambda: 0.0001
+2026-03-25 19:29:41 - INFO -   seeds: [42, 123, 456, 789, 1000]
+2026-03-25 19:29:42 - INFO - Final Results - SOFTMAX
+2026-03-25 19:29:42 - INFO -   Seed: 42
+2026-03-25 19:29:42 - INFO -   Test Loss: 0.2698
+2026-03-25 19:29:42 - INFO -   Test Accuracy: 0.9375
+2026-03-25 19:29:43 - INFO - Final Results - NN
+2026-03-25 19:29:43 - INFO -   Seed: 42
+2026-03-25 19:29:43 - INFO -   Test Loss: 0.1741
+2026-03-25 19:29:43 - INFO -   Test Accuracy: 0.9402
+2026-03-25 19:29:54 - INFO - Metrics saved to starter_pack/results\metrics\digits_20260325_192941_metrics.json

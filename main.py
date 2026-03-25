@@ -40,6 +40,7 @@ from starter_pack.src.visualization import (
     plot_confusion_matrix,
     save_results_table
 )
+from starter_pack.src.logging_utils import ExperimentLogger, save_comparison_table, save_statistics
 
 
 # Default hyperparameters (from PDF protocol)
@@ -59,7 +60,14 @@ DEFAULTS = {
 
 def setup_directories():
     """Create necessary output directories."""
-    dirs = ['starter_pack/figures', 'starter_pack/results']
+    dirs = [
+        'starter_pack/figures',
+        'starter_pack/results',
+        'starter_pack/results/logs',
+        'starter_pack/results/metrics',
+        'starter_pack/results/statistics',
+        'starter_pack/results/tables'
+    ]
     for d in dirs:
         os.makedirs(d, exist_ok=True)
 
@@ -264,6 +272,19 @@ def run_synthetic_experiment(
     print(f"EXPERIMENT: {name}")
     print(f"{'='*60}")
 
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name=name, results_dir='starter_pack/results')
+    config = {
+        'dataset': name,
+        'epochs': epochs,
+        'hidden_width': hidden_width,
+        'batch_size': DEFAULTS['batch_size'],
+        'lr_softmax': DEFAULTS['lr_softmax'],
+        'lr_sgd': DEFAULTS['lr_sgd'],
+        'reg_lambda': DEFAULTS['reg_lambda']
+    }
+    logger.log_config(config)
+
     X_train, y_train = data['X_train'], data['y_train']
     X_val, y_val = data['X_val'], data['y_val']
     X_test, y_test = data['X_test'], data['y_test']
@@ -294,11 +315,12 @@ def run_synthetic_experiment(
     evaluator = Evaluator()
     softmax_metrics = evaluator.compute_metrics(softmax_model, X_test, y_test)
     results['softmax'] = {
-        'accuracy': softmax_metrics['accuracy'],
-        'loss': softmax_metrics['cross_entropy'],
-        'history': softmax_history
+        'accuracy': float(softmax_metrics['accuracy']),
+        'loss': float(softmax_metrics['cross_entropy']),
+        'history': softmax_history.to_dict()
     }
     print(f"Softmax - Test Accuracy: {softmax_metrics['accuracy']:.4f}")
+    logger.log_result('softmax', softmax_metrics['cross_entropy'], softmax_metrics['accuracy'], seed=42)
 
     # Neural Network
     print("\nTraining Neural Network...")
@@ -321,11 +343,12 @@ def run_synthetic_experiment(
 
     nn_metrics = evaluator.compute_metrics(nn_model, X_test, y_test)
     results['nn'] = {
-        'accuracy': nn_metrics['accuracy'],
-        'loss': nn_metrics['cross_entropy'],
-        'history': nn_history
+        'accuracy': float(nn_metrics['accuracy']),
+        'loss': float(nn_metrics['cross_entropy']),
+        'history': nn_history.to_dict()
     }
     print(f"NN - Test Accuracy: {nn_metrics['accuracy']:.4f}")
+    logger.log_result('nn', nn_metrics['cross_entropy'], nn_metrics['accuracy'], seed=42)
 
     # Decision boundary plots
     fig, axes = plt.subplots(1, 2, figsize=(14, 6))
@@ -356,6 +379,10 @@ def run_synthetic_experiment(
     plt.savefig(f'starter_pack/figures/training_dynamics_{name}.png', dpi=150, bbox_inches='tight')
     plt.show()
 
+    # Save metrics and results
+    logger.save_metrics()
+    save_comparison_table(results, f'{name}_results.json')
+
     return results
 
 
@@ -373,6 +400,20 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     print(f"\n{'='*60}")
     print("EXPERIMENT: Digits Benchmark")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='digits', results_dir='starter_pack/results')
+    config = {
+        'dataset': 'digits',
+        'epochs': DEFAULTS['epochs'],
+        'hidden_width': DEFAULTS['hidden_width'],
+        'batch_size': DEFAULTS['batch_size'],
+        'lr_softmax': DEFAULTS['lr_softmax'],
+        'lr_sgd': DEFAULTS['lr_sgd'],
+        'reg_lambda': DEFAULTS['reg_lambda'],
+        'seeds': DEFAULTS['seeds']
+    }
+    logger.log_config(config)
 
     X, y = digits_data['X'], digits_data['y']
     train_idx, val_idx, test_idx = digits_data['train_idx'], digits_data['val_idx'], digits_data['test_idx']
@@ -408,12 +449,13 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     evaluator = Evaluator()
     softmax_metrics = evaluator.compute_metrics(softmax_model, X_test, y_test)
     results['softmax'] = {
-        'test_accuracy': softmax_metrics['accuracy'],
-        'test_loss': softmax_metrics['cross_entropy'],
-        'history': softmax_history
+        'test_accuracy': float(softmax_metrics['accuracy']),
+        'test_loss': float(softmax_metrics['cross_entropy']),
+        'history': softmax_history.to_dict()
     }
     all_histories['softmax'] = softmax_history
     print(f"Softmax - Test Accuracy: {softmax_metrics['accuracy']:.4f}, Loss: {softmax_metrics['cross_entropy']:.4f}")
+    logger.log_result('softmax', softmax_metrics['cross_entropy'], softmax_metrics['accuracy'], seed=42)
 
     # Neural Network
     print("\nTraining Neural Network on Digits...")
@@ -436,12 +478,13 @@ def run_digits_experiment(digits_data, track: str = 'base'):
 
     nn_metrics = evaluator.compute_metrics(nn_model, X_test, y_test)
     results['nn'] = {
-        'test_accuracy': nn_metrics['accuracy'],
-        'test_loss': nn_metrics['cross_entropy'],
-        'history': nn_history
+        'test_accuracy': float(nn_metrics['accuracy']),
+        'test_loss': float(nn_metrics['cross_entropy']),
+        'history': nn_history.to_dict()
     }
     all_histories['nn'] = nn_history
     print(f"NN - Test Accuracy: {nn_metrics['accuracy']:.4f}, Loss: {nn_metrics['cross_entropy']:.4f}")
+    logger.log_result('nn', nn_metrics['cross_entropy'], nn_metrics['accuracy'], seed=42)
 
     # Training dynamics
     fig, axes = plt.subplots(2, 1, figsize=(14, 8))
@@ -537,6 +580,24 @@ def run_digits_experiment(digits_data, track: str = 'base'):
     print(f"NN:      Acc={np.mean(nn_acc):.4f}±{np.std(nn_acc, ddof=1):.4f}, "
           f"Loss={np.mean(nn_loss):.4f}±{np.std(nn_loss, ddof=1):.4f}")
 
+    # Log aggregated statistics
+    stats = {
+        'softmax_acc_mean': float(np.mean(sm_acc)),
+        'softmax_acc_std': float(np.std(sm_acc, ddof=1)),
+        'softmax_loss_mean': float(np.mean(sm_loss)),
+        'softmax_loss_std': float(np.std(sm_loss, ddof=1)),
+        'nn_acc_mean': float(np.mean(nn_acc)),
+        'nn_acc_std': float(np.std(nn_acc, ddof=1)),
+        'nn_loss_mean': float(np.mean(nn_loss)),
+        'nn_loss_std': float(np.std(nn_loss, ddof=1)),
+        'num_seeds': len(DEFAULTS['seeds'])
+    }
+    save_statistics(stats, 'digits_seed_statistics.json')
+
+    # Save metrics and results
+    logger.save_metrics()
+    save_comparison_table(results, 'digits_results.json')
+
     return results, all_histories
 
 
@@ -547,6 +608,10 @@ def run_optimizer_study(digits_data):
     print(f"\n{'='*60}")
     print("EXPERIMENT: Optimizer Study")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='optimizer_study', results_dir='starter_pack/results')
+    logger.log_config({'ablation_type': 'optimizer_comparison', 'optimizers': ['SGD', 'Momentum', 'Adam']})
 
     X, y = digits_data['X'], digits_data['y']
     X_train, y_train = X[digits_data['train_idx']], y[digits_data['train_idx']]
@@ -592,6 +657,11 @@ def run_optimizer_study(digits_data):
     plt.savefig('starter_pack/figures/optimizer_comparison.png', dpi=150, bbox_inches='tight')
     plt.show()
 
+    # Save results
+    logger.save_metrics()
+    results_dict = {name: {'final_val_acc': float(history.val_accuracies[-1])} for name, history in histories.items()}
+    save_comparison_table(results_dict, 'optimizer_study_results.json')
+
     return histories
 
 
@@ -602,6 +672,10 @@ def run_capacity_ablation(moons_data):
     print(f"\n{'='*60}")
     print("EXPERIMENT: Capacity Ablation")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='capacity_ablation', results_dir='starter_pack/results')
+    logger.log_config({'ablation_type': 'hidden_width', 'hidden_widths': [2, 8, 32]})
 
     X_train, y_train = moons_data['X_train'], moons_data['y_train']
     X_val, y_val = moons_data['X_val'], moons_data['y_val']
@@ -672,6 +746,17 @@ def run_capacity_ablation(moons_data):
     plt.savefig('starter_pack/figures/capacity_ablation_curves.png', dpi=150, bbox_inches='tight')
     plt.show()
 
+    # Save results
+    logger.save_metrics()
+    results_dict = {
+        str(w): {
+            'final_val_loss': float(histories[w].val_losses[-1]),
+            'history': histories[w].to_dict()
+        }
+        for w in hidden_widths
+    }
+    save_comparison_table(results_dict, 'capacity_ablation_results.json')
+
     return histories, models
 
 
@@ -687,6 +772,10 @@ def run_track_a(digits_data):
     print(f"\n{'='*60}")
     print("TRACK A: PCA/SVD Analysis")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='track_a_pca', results_dir='starter_pack/results')
+    logger.log_config({'track': 'a', 'analysis': 'pca_svd'})
 
     X, y = digits_data['X'], digits_data['y']
     X_train, y_train = X[digits_data['train_idx']], y[digits_data['train_idx']]
@@ -734,6 +823,11 @@ def run_track_a(digits_data):
         results[dim] = metrics
         print(f"  dim={dim}: Acc={metrics['accuracy']:.4f}, Loss={metrics['cross_entropy']:.4f}")
 
+    # Save results
+    logger.save_metrics()
+    results_dict = {str(d): {'accuracy': float(results[d]['accuracy']), 'loss': float(results[d]['cross_entropy'])} for d in dimensions}
+    save_comparison_table(results_dict, 'track_a_pca_results.json')
+
     return results
 
 
@@ -748,6 +842,10 @@ def run_track_b(digits_data):
     print(f"\n{'='*60}")
     print("TRACK B: Confidence and Reliability")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='track_b_confidence', results_dir='starter_pack/results')
+    logger.log_config({'track': 'b', 'analysis': 'confidence_reliability', 'n_bins': 5})
 
     X, y = digits_data['X'], digits_data['y']
     X_test, y_test = X[digits_data['test_idx']], y[digits_data['test_idx']]
@@ -772,9 +870,14 @@ def run_track_b(digits_data):
 
     print("\nConfidence vs Accuracy Analysis:")
 
+    results = {}
     for name, model in [('Softmax', softmax), ('NN', nn)]:
+        key = name.lower()
         P = evaluator.predict_proba(model, X_test)
         conf_bins = evaluator.confidence_by_bin(model, X_test, y_test, n_bins=5)
+
+        results.setdefault(key, {})
+        results[key]['confidence_bins'] = conf_bins
 
         print(f"\n{name}:")
         print(f"{'Bin':<6} {'Conf Range':<15} {'Mean Conf':<12} {'Accuracy':<10} {'Count':<8}")
@@ -784,13 +887,14 @@ def run_track_b(digits_data):
                   f"{b['accuracy']:<10.4f} {b['count']:<8}")
 
         plot_confidence_vs_accuracy(conf_bins, title=f'{name}: Confidence vs Accuracy')
-        plt.savefig(f'starter_pack/figures/track_b_confidence_{name.lower()}.png', dpi=150, bbox_inches='tight')
+        plt.savefig(f'starter_pack/figures/track_b_confidence_{key}.png', dpi=150, bbox_inches='tight')
         plt.show()
 
     # Correct vs Incorrect analysis
     print("\nCorrect vs Incorrect Prediction Analysis:")
 
-    for name, model in [('Softmax', softmax), ('NN', nn)]:
+    for name, model in [('softmax', softmax), ('nn', nn)]:
+        key = name
         P = evaluator.predict_proba(model, X_test)
         y_pred = np.argmax(P, axis=1)
         correct_mask = (y_pred == y_test)
@@ -798,11 +902,25 @@ def run_track_b(digits_data):
         max_probs = np.max(P, axis=1)
         entropy = -np.sum(P * np.log(P + 1e-9), axis=1)
 
-        print(f"\n{name}:")
-        print(f"  Correct predictions:   mean_conf={max_probs[correct_mask].mean():.4f}, "
-              f"mean_entropy={entropy[correct_mask].mean():.4f}")
-        print(f"  Incorrect predictions: mean_conf={max_probs[~correct_mask].mean():.4f}, "
-              f"mean_entropy={entropy[~correct_mask].mean():.4f}")
+        acc = np.mean(y_pred == y_test)
+        loss = evaluator.compute_metrics(model, X_test, y_test)['cross_entropy']
+
+        results.setdefault(name, {})
+        results[name].update({
+            'overall_accuracy': float(acc),
+            'overall_loss': float(loss),
+            'correct_mean_confidence': float(max_probs[correct_mask].mean()),
+            'correct_mean_entropy': float(entropy[correct_mask].mean()),
+            'incorrect_mean_confidence': float(max_probs[~correct_mask].mean()),
+            'incorrect_mean_entropy': float(entropy[~correct_mask].mean())
+        })
+
+        print(f"\n{name.title()}: \n  Correct mean_conf={results[name]['correct_mean_confidence']:.4f}, "
+              f"mean_entropy={results[name]['correct_mean_entropy']:.4f}\n  Incorrect mean_conf={results[name]['incorrect_mean_confidence']:.4f}, "
+              f"mean_entropy={results[name]['incorrect_mean_entropy']:.4f}")
+
+    logger.save_metrics()
+    save_comparison_table(results, 'track_b_confidence_results.json')
 
 
 def run_failure_case_analysis(moons_data):
@@ -814,6 +932,10 @@ def run_failure_case_analysis(moons_data):
     print(f"\n{'='*60}")
     print("EXPERIMENT: Failure Case Analysis")
     print(f"{'='*60}")
+
+    # Initialize logger
+    logger = ExperimentLogger(experiment_name='failure_case', results_dir='starter_pack/results')
+    logger.log_config({'failure_type': 'undercapacity', 'hidden_width': 1})
 
     X_train, y_train = moons_data['X_train'], moons_data['y_train']
     X_val, y_val = moons_data['X_val'], moons_data['y_val']
@@ -861,6 +983,10 @@ def run_failure_case_analysis(moons_data):
     plt.tight_layout()
     plt.savefig('starter_pack/figures/failure_case_undercapacity.png', dpi=150, bbox_inches='tight')
     plt.show()
+
+    # Log and save results
+    logger.log_result('undercapacity_model', metrics['cross_entropy'], metrics['accuracy'], seed=42)
+    logger.save_metrics()
 
     return history, metrics
 
