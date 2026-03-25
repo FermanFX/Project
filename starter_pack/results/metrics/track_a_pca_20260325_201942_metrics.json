@@ -1,0 +1,12 @@
+{
+  "run_id": "20260325_201942",
+  "experiment": "track_a_pca",
+  "config": {
+    "track": "a",
+    "analysis": "pca_svd",
+    "include_3d": true
+  },
+  "history": [],
+  "final_metrics": {},
+  "timestamp": "2026-03-25T20:20:10.996631"
+}

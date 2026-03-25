@@ -40,6 +40,7 @@ from starter_pack.src.visualization import (
     plot_confusion_matrix,
     save_results_table
 )
+from starter_pack.src.visualization import plot_pca_3d
 from starter_pack.src.logging_utils import ExperimentLogger, save_comparison_table, save_statistics
 
 
@@ -760,7 +761,77 @@ def run_capacity_ablation(moons_data):
     return histories, models
 
 
-def run_track_a(digits_data):
+# def run_track_a(digits_data):
+#     """
+#     Track A: PCA/SVD and input geometry analysis.
+
+#     Required:
+#     - Scree plot
+#     - 2D PCA visualization
+#     - Comparison at PCA dimensions {10, 20, 40}
+#     """
+#     print(f"\n{'='*60}")
+#     print("TRACK A: PCA/SVD Analysis")
+#     print(f"{'='*60}")
+
+#     # Initialize logger
+#     logger = ExperimentLogger(experiment_name='track_a_pca', results_dir='starter_pack/results')
+#     logger.log_config({'track': 'a', 'analysis': 'pca_svd'})
+
+#     X, y = digits_data['X'], digits_data['y']
+#     X_train, y_train = X[digits_data['train_idx']], y[digits_data['train_idx']]
+#     X_val, y_val = X[digits_data['val_idx']], y[digits_data['val_idx']]
+#     X_test, y_test = X[digits_data['test_idx']], y[digits_data['test_idx']]
+
+#     # PCA
+#     X_centered = X - X.mean(axis=0)
+#     U, S, Vt = np.linalg.svd(X_centered, full_matrices=False)
+
+#     eigenvalues = S ** 2 / (len(S) - 1)
+
+#     plot_pca_scree(eigenvalues, title='PCA Scree Plot (Digits)')
+#     plt.savefig('starter_pack/figures/track_a_scree.png', dpi=150, bbox_inches='tight')
+#     plt.show()
+
+#     # 2D PCA visualization
+#     X_pca_2d = U[:, :2] * S[:2]
+#     plot_pca_2d(X_pca_2d, y, title='PCA 2D Visualization (Digits)')
+#     plt.savefig('starter_pack/figures/track_a_pca2d.png', dpi=150, bbox_inches='tight')
+#     plt.show()
+
+#     # Classification at different PCA dimensions
+#     dimensions = [10, 20, 40]
+#     results = {}
+
+#     print("\nClassification at different PCA dimensions:")
+
+#     for dim in dimensions:
+#         X_proj = U[:, :dim] * S[:dim]
+
+#         X_tr = X_proj[digits_data['train_idx']]
+#         X_vl = X_proj[digits_data['val_idx']]
+#         X_ts = X_proj[digits_data['test_idx']]
+
+#         np.random.seed(42)
+#         model = SoftmaxRegression(dim, 10, DEFAULTS['lr_softmax'], DEFAULTS['reg_lambda'])
+#         opt = SGD(DEFAULTS['lr_softmax'])
+#         trainer = SoftmaxTrainer(model, opt, 200, 64, DEFAULTS['reg_lambda'], verbose=False)
+#         trainer.train(X_tr, y_train, X_vl, y_val)
+
+#         evaluator = Evaluator()
+#         metrics = evaluator.compute_metrics(model, X_ts, y_test)
+
+#         results[dim] = metrics
+#         print(f"  dim={dim}: Acc={metrics['accuracy']:.4f}, Loss={metrics['cross_entropy']:.4f}")
+
+#     # Save results
+#     logger.save_metrics()
+#     results_dict = {str(d): {'accuracy': float(results[d]['accuracy']), 'loss': float(results[d]['cross_entropy'])} for d in dimensions}
+#     save_comparison_table(results_dict, 'track_a_pca_results.json')
+
+#     return results
+
+def run_track_a(digits_data, include_3d: bool = True):
     """
     Track A: PCA/SVD and input geometry analysis.
 
@@ -768,6 +839,7 @@ def run_track_a(digits_data):
     - Scree plot
     - 2D PCA visualization
     - Comparison at PCA dimensions {10, 20, 40}
+    - Optional: 3D PCA visualization
     """
     print(f"\n{'='*60}")
     print("TRACK A: PCA/SVD Analysis")
@@ -775,7 +847,7 @@ def run_track_a(digits_data):
 
     # Initialize logger
     logger = ExperimentLogger(experiment_name='track_a_pca', results_dir='starter_pack/results')
-    logger.log_config({'track': 'a', 'analysis': 'pca_svd'})
+    logger.log_config({'track': 'a', 'analysis': 'pca_svd', 'include_3d': include_3d})
 
     X, y = digits_data['X'], digits_data['y']
     X_train, y_train = X[digits_data['train_idx']], y[digits_data['train_idx']]
@@ -788,6 +860,7 @@ def run_track_a(digits_data):
 
     eigenvalues = S ** 2 / (len(S) - 1)
 
+    # Scree plot
     plot_pca_scree(eigenvalues, title='PCA Scree Plot (Digits)')
     plt.savefig('starter_pack/figures/track_a_scree.png', dpi=150, bbox_inches='tight')
     plt.show()
@@ -797,6 +870,14 @@ def run_track_a(digits_data):
     plot_pca_2d(X_pca_2d, y, title='PCA 2D Visualization (Digits)')
     plt.savefig('starter_pack/figures/track_a_pca2d.png', dpi=150, bbox_inches='tight')
     plt.show()
+
+    # 3D PCA visualization (optional extension)
+    if include_3d:
+        print("\nGenerating 3D PCA visualization...")
+        X_pca_3d = U[:, :3] * S[:3]
+        plot_pca_3d(X_pca_3d, y, title='PCA 3D Visualization (Digits)')
+        plt.savefig('starter_pack/figures/track_a_pca3d.png', dpi=150, bbox_inches='tight')
+        plt.show()
 
     # Classification at different PCA dimensions
     dimensions = [10, 20, 40]
@@ -828,8 +909,12 @@ def run_track_a(digits_data):
     results_dict = {str(d): {'accuracy': float(results[d]['accuracy']), 'loss': float(results[d]['cross_entropy'])} for d in dimensions}
     save_comparison_table(results_dict, 'track_a_pca_results.json')
 
-    return results
+    # Optionally save explained variance
+    explained_variance = eigenvalues[:3] / np.sum(eigenvalues)
+    print(f"\nExplained variance by first 3 PCs: PC1={explained_variance[0]:.3f}, PC2={explained_variance[1]:.3f}, PC3={explained_variance[2]:.3f}")
+    print(f"Total explained by first 3 PCs: {np.sum(explained_variance):.3f}")
 
+    return results
 
 def run_track_b(digits_data):
     """

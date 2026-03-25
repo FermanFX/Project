@@ -8,6 +8,10 @@ from .models import SoftmaxRegression, OneHiddenLayerNN
 from .evaluation import RepeatedSeedResult
 
 
+
+# mpl_toolkits will be imported inside plot_pca_3d() to avoid dependency issues
+
+
 def plot_decision_boundary(
     model,
     X: np.ndarray,
@@ -568,3 +572,70 @@ def save_results_table(
 
     df = pd.DataFrame(results)
     df.to_csv(save_path, index=False)
+
+# Want to add 3d visualization.
+# Comment the code below if needed.
+def plot_pca_3d(
+    X_pca: np.ndarray,
+    y: np.ndarray,
+    title: str = "PCA 3D Visualization",
+    save_path: Optional[str] = None,
+    ax: Optional[plt.Axes] = None
+) -> plt.Axes:
+    """
+    Plot 3D PCA visualization of digits data (for Track A extension).
+
+    Shows:
+        - How digits cluster in 3D PCA space
+        - Interactive 3D visualization with rotation capability
+        - Which digits are similar/different in 3D space
+
+    Args:
+        X_pca: PCA-transformed data (n_samples, 3)
+        y: Labels (0-9)
+        title: Plot title
+        save_path: If provided, save figure
+        ax: If provided, plot on this axes
+
+    Returns:
+        Matplotlib axes object
+    """
+    from mpl_toolkits.mplot3d import Axes3D
+
+    if ax is None:
+        fig = plt.figure(figsize=(12, 10))
+        ax = fig.add_subplot(111, projection='3d')
+    else:
+        fig = ax.figure
+
+    # Create scatter plot with colors by digit
+    scatter = ax.scatter(
+        X_pca[:, 0],
+        X_pca[:, 1],
+        X_pca[:, 2],
+        c=y,
+        cmap='tab10',
+        alpha=0.7,
+        edgecolors='black',
+        s=50
+    )
+
+    # Colorbar
+    cbar = plt.colorbar(scatter, ax=ax, ticks=range(10))
+    cbar.set_label('Digit Label', fontsize=12)
+
+    # Labels and title
+    ax.set_xlabel('PC1', fontsize=12)
+    ax.set_ylabel('PC2', fontsize=12)
+    ax.set_zlabel('PC3', fontsize=12)
+    ax.set_title(title, fontsize=14)
+    ax.grid(True, alpha=0.3)
+
+    # Set viewing angle for better visualization
+    ax.view_init(elev=20, azim=45)
+
+    plt.tight_layout()
+    if save_path:
+        plt.savefig(save_path, dpi=300, bbox_inches='tight')
+
+    return ax
