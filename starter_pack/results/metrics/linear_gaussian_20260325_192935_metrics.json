@@ -1,0 +1,31 @@
+{
+  "run_id": "20260325_192935",
+  "experiment": "linear_gaussian",
+  "config": {
+    "dataset": "linear_gaussian",
+    "epochs": 200,
+    "hidden_width": 8,
+    "batch_size": 64,
+    "lr_softmax": 0.05,
+    "lr_sgd": 0.05,
+    "reg_lambda": 0.0001
+  },
+  "history": [],
+  "final_metrics": {
+    "softmax": {
+      "model": "softmax",
+      "seed": 42,
+      "test_loss": 0.15389827938159087,
+      "test_acc": 0.95,
+      "timestamp": "2026-03-25T19:29:35.583659"
+    },
+    "nn": {
+      "model": "nn",
+      "seed": 42,
+      "test_loss": 0.1619942815517922,
+      "test_acc": 0.95,
+      "timestamp": "2026-03-25T19:29:35.716001"
+    }
+  },
+  "timestamp": "2026-03-25T19:29:38.909567"
+}

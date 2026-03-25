@@ -1,0 +1,21 @@
+2026-03-25 19:17:19 - INFO - ============================================================
+2026-03-25 19:17:19 - INFO - Experiment: moons
+2026-03-25 19:17:19 - INFO - Run ID: 20260325_191719
+2026-03-25 19:17:19 - INFO - ============================================================
+2026-03-25 19:17:19 - INFO - Configuration:
+2026-03-25 19:17:19 - INFO -   dataset: moons
+2026-03-25 19:17:19 - INFO -   epochs: 200
+2026-03-25 19:17:19 - INFO -   hidden_width: 32
+2026-03-25 19:17:19 - INFO -   batch_size: 64
+2026-03-25 19:17:19 - INFO -   lr_softmax: 0.05
+2026-03-25 19:17:19 - INFO -   lr_sgd: 0.05
+2026-03-25 19:17:19 - INFO -   reg_lambda: 0.0001
+2026-03-25 19:17:19 - INFO - Final Results - SOFTMAX
+2026-03-25 19:17:19 - INFO -   Seed: 42
+2026-03-25 19:17:19 - INFO -   Test Loss: 0.2853
+2026-03-25 19:17:19 - INFO -   Test Accuracy: 0.8500
+2026-03-25 19:17:19 - INFO - Final Results - NN
+2026-03-25 19:17:19 - INFO -   Seed: 42
+2026-03-25 19:17:19 - INFO -   Test Loss: 0.1898
+2026-03-25 19:17:19 - INFO -   Test Accuracy: 0.9375
+2026-03-25 19:17:25 - INFO - Metrics saved to starter_pack/results\metrics\moons_20260325_191719_metrics.json

@@ -1,0 +1,15 @@
+{
+  "run_id": "20260325_154808",
+  "experiment": "optimizer_study",
+  "config": {
+    "ablation_type": "optimizer_comparison",
+    "optimizers": [
+      "SGD",
+      "Momentum",
+      "Adam"
+    ]
+  },
+  "history": [],
+  "final_metrics": {},
+  "timestamp": "2026-03-25T15:48:15.003240"
+}

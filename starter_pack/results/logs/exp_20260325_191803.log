@@ -1,0 +1,9 @@
+2026-03-25 19:18:03 - INFO - ============================================================
+2026-03-25 19:18:03 - INFO - Experiment: track_b_confidence
+2026-03-25 19:18:03 - INFO - Run ID: 20260325_191803
+2026-03-25 19:18:03 - INFO - ============================================================
+2026-03-25 19:18:03 - INFO - Configuration:
+2026-03-25 19:18:03 - INFO -   track: b
+2026-03-25 19:18:03 - INFO -   analysis: confidence_reliability
+2026-03-25 19:18:03 - INFO -   n_bins: 5
+2026-03-25 19:18:20 - INFO - Metrics saved to starter_pack/results\metrics\track_b_confidence_20260325_191803_metrics.json
