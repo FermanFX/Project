@@ -501,6 +501,7 @@ Finally, our conclusions are tied to the specific train/validation/test split pr
 
 Given these limitations, our conclusions should be restricted to the specific experimental setup described: shallow tanh networks trained with L2 regularization and fixed hyperparameters on the Linear Gaussian, Moons, and digits datasets. We caution against overgeneralizing claims such as "linear models are sufficient for digit classification" or "neural networks always overfit on small datasets." Instead, our findings are best understood as a controlled demonstration of how dataset geometry, hidden layer capacity, initialization variance, and optimization choices interact in a well-defined setting.
 
+
 \section*{References}
 Use a consistent citation style.
 
@@ -907,7 +908,28 @@ Include exactly one of the following:
 Interpret the results. State clearly where linear structure was sufficient, where nonlinearity helped, and why. Distinguish what is supported by evidence from what remains uncertain. Use consistent notation and define symbols before using them.
 
 \section{Limitations}
-Explain what the project does not test and which conclusions should not be overgeneralized.
+
+Several important limitations constrain the interpretability and generalizability of our findings.
+
+First, our comparison is confined to three datasets: two synthetic tasks (Linear Gaussian and Moons) and one real-world benchmark (the digits dataset). The relative performance of softmax regression versus a one-hidden-layer neural network is dataset-dependent, and our conclusions about when linearity suffices or nonlinearity helps may not extend to other domains such as natural images, text classification, audio data, or high-dimensional tabular datasets with different underlying structure.
+
+Second, we consider only one architecture for the nonlinear model: a single hidden layer with tanh activation. While we varied the hidden width ($h \in \{1,2,8,32\}$) in our capacity ablations, we did not explore deeper architectures, alternative activation functions (e.g., ReLU, sigmoid), or modern architectural components such as batch normalization, dropout, or residual connections. Therefore, our results do not imply that neural networks in general underperform or overperform relative to linear models; they reflect only this specific family of shallow networks under our chosen training protocol. The tanh activation, while mathematically convenient, may exhibit saturation effects that deeper networks with ReLU activations could mitigate.
+
+Third, our hyperparameters (learning rate $\epsilon = 0.05$, batch size $64$, number of epochs $200$, L2 regularization $\lambda = 10^{-4}$) were fixed based on the assignment protocol rather than systematically tuned for each task. While we performed an optimizer study (SGD, Momentum, Adam) on the digits benchmark, we did not conduct a full hyperparameter search. It is possible that a more systematic tuning could improve the neural network's performance, particularly in regimes where it currently underperforms or shows high variance. Conversely, different hyperparameters might reveal overfitting patterns not captured here.
+
+Fourth, we evaluate models primarily on classification accuracy and cross-entropy loss. Other dimensions of model performance—such as computational efficiency, training time, inference latency, robustness to adversarial perturbations, calibration quality, or fairness across subgroups—are not assessed. A practitioner choosing between models for a real-world application would need to consider these trade-offs beyond accuracy.
+
+Fifth, our analysis of the hidden layer's representational capacity is indirect. While we observe performance differences across hidden widths and the moons decision boundaries visually show curvature, we do not directly measure properties such as intrinsic dimensionality of the learned representation, margin distributions, or the rank and condition number of weight matrices throughout training. The mechanisms by which the hidden layer enables or fails to enable better classification remain partially inferred from behavioral evidence rather than directly measured.
+
+Sixth, our experiments with different training set sizes are limited. While we varied hidden width as a form of capacity ablation, we did not systematically vary dataset size, label noise, class imbalance, or input dimensionality. The question of when nonlinear complexity justifies itself remains tied to the specific data regimes tested. Similarly, our moons dataset uses a fixed noise level and class separation; varying these parameters could shift the capacity threshold we observed.
+
+Seventh, while we performed repeated-seed evaluation ($n=5$) for the digits benchmark, we did not apply the same statistical rigor to all experiments. The capacity ablation on moons and the optimizer study used single runs, meaning our confidence intervals and variance estimates for these results are not available. Conclusions about optimizer performance differences or the $h=32$ drop in test accuracy should therefore be interpreted with caution.
+
+Eighth, our PCA analysis demonstrates the low-dimensional structure of the digits data, but we trained only softmax regression on the PCA-reduced representations. Whether the neural network would exhibit similar or different sensitivity to dimensionality reduction remains unexplored.
+
+Finally, our conclusions are tied to the specific train/validation/test split provided in the starter pack. While repeated seeds for initialization capture variance due to random initialization, they do not address variance arising from different data splits. Cross-validation or multiple random splits would be necessary to assess the stability of our findings across different data partitions.
+
+Given these limitations, our conclusions should be restricted to the specific experimental setup described: shallow tanh networks trained with L2 regularization and fixed hyperparameters on the Linear Gaussian, Moons, and digits datasets. We caution against overgeneralizing claims such as "linear models are sufficient for digit classification" or "neural networks always overfit on small datasets." Instead, our findings are best understood as a controlled demonstration of how dataset geometry, hidden layer capacity, initialization variance, and optimization choices interact in a well-defined setting.
 
 \section*{References}
 Use a consistent citation style.
