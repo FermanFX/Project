@@ -23,7 +23,40 @@ State the central question, the models compared, the main experimental evidence,
 \end{abstract}
 
 \section{Introduction}
-Frame the capstone question and explain why comparing a linear model to a one-hidden-layer neural network is scientifically meaningful.
+
+The central scientific question of this capstone project, conducted as part of the Math4AI program organized by the National AI Center -- AI Academy, is:
+
+\begin{center}
+\fbox{%
+  \parbox{0.85\linewidth}{%
+    \centering
+    \textbf{When does a one-hidden-layer nonlinear classifier improve upon a linear decision boundary, and when is the added complexity unnecessary?}%
+  }%
+}
+\end{center}
+
+This question has direct practical significance: applying complex models where simpler ones suffice wastes computational resources and may degrade generalization; conversely, using linear models on tasks requiring nonlinear representations leaves performance gains unrealized.
+
+To investigate this question, we implement two classification models from scratch in NumPy: \textbf{softmax regression} (a linear classifier) and a \textbf{one-hidden-layer neural network} with $\operatorname{tanh}$ activations. Softmax regression performs an affine transformation $\mathbf{s} = \mathbf{X}\mathbf{W} + \mathbf{b}$ followed by a softmax function, minimizing cross-entropy loss. The neural network extends this by inserting a hidden layer: $\mathbf{Z}_1 = \mathbf{X}\mathbf{W}_1^\top + \mathbf{b}_1$, $\mathbf{H} = \tanh(\mathbf{Z}_1)$, $\mathbf{s} = \mathbf{H}\mathbf{W}_2^\top + \mathbf{b}_2$, enabling the learning of nonlinear decision boundaries.
+
+Comparing these two models is scientifically meaningful for three reasons. First, by fixing all other factors (optimizer, regularization, data split, training epochs), any performance gap directly isolates the \emph{structural} contribution of the hidden layer. Second, the one-hidden-layer architecture is the minimal extension from linear to nonlinear classification, making it ideal for studying the boundary between these two regimes. Third, varying the hidden width $\{2, 8, 32\}$ provides a controlled setting to study how representational capacity scales with model size.
+
+We evaluate three hypotheses:
+
+\begin{itemize}
+    \item \textbf{Hypothesis 1 (Linear Sufficiency):} On linearly separable data, both models should achieve comparable performance, as the hidden layer's nonlinear capacity remains unexploited when a linear boundary is optimal.
+    \item \textbf{Hypothesis 2 (Nonlinear Necessity):} On nonlinearly separable data, the neural network should significantly outperform softmax regression, as the curved geometry of the classes requires nonlinear decision boundaries.
+    \item \textbf{Hypothesis 3 (Capacity Scaling):} As hidden width increases, performance improves but with diminishing returns, suggesting an optimal capacity that matches the intrinsic task complexity.
+\end{itemize}
+
+We test these hypotheses across three datasets. On the Linear Gaussian task (two Gaussian blobs), both models achieve \textbf{95.0\% accuracy}, confirming that linear structure suffices when data admits a straight-line separation. On the Moons task (two interleaving crescents), softmax regression achieves only \textbf{85.0\% accuracy} while the neural network achieves \textbf{93.75\% accuracy}---an 8.75 percentage point improvement demonstrating that curved decision boundaries require nonlinear classifiers. On the real-world Digits benchmark (64-dimensional pixels, 10 classes), the neural network achieves \textbf{95.3\% mean accuracy} (5 seeds, 95\% CI: [0.950, 0.956]) compared to softmax regression's \textbf{93.8\%} (95\% CI: [0.936, 0.940]), a statistically significant gap of 1.5 percentage points with non-overlapping confidence intervals.
+
+These results answer the central question: the hidden layer improves performance when the data geometry is nonlinear (as in Moons), but provides no benefit when the optimal decision boundary is linear (as in Linear Gaussian). On real-world data like Digits, where geometry is partially nonlinear, the improvement is modest but consistent. Capacity ablation confirms that hidden width $h = 8$ is sufficient for the Moons task, with diminishing returns at $h = 32$. A failure case with $h = 1$ demonstrates that insufficient capacity collapses to linear-level performance, confirming that the hidden layer's value depends critically on matching capacity to task complexity.
+
+Comparing a linear model to a one-hidden-layer neural network is scientifically meaningful because it isolates the role of nonlinearity in learning from data. A linear model assumes that the relationship between inputs and outputs can be expressed as a weighted sum, which is a strong and often unrealistic assumption. In contrast, a one-hidden-layer neural network introduces nonlinear activation functions, allowing it to approximate a much wider class of functions. This comparison helps researchers understand whether the underlying data structure is inherently linear or requires more complex representations. If both models achieve similar performance, it suggests that the problem may not benefit from added complexity. However, if the neural network significantly outperforms the linear model, it provides evidence of nonlinear patterns in the data. This makes the comparison a diagnostic tool for model selection.
+
+This comparison also helps quantify the trade-off between simplicity and expressive power. Linear models are easier to interpret, while neural networks often act as black boxes. By comparing them, we gain insight into whether increased complexity justifies the loss of interpretability. Additionally, this evaluation highlights issues such as overfitting, since more flexible models can fit noise in the data. It also provides a controlled way to study bias-variance trade-offs in practice. From a theoretical perspective, it connects simple hypothesis classes to more expressive function approximators. From a practical standpoint, it guides decisions about computational cost and training time. Ultimately, this comparison deepens our understanding of how model capacity influences learning outcomes.
+
 
 \section{Background and Mathematical Setup}
 Define the AI concepts used in the project and summarize the required mathematical setup. Explain why softmax regression is a probabilistic model, why cross-entropy is negative log-likelihood, and describe the one-hidden-layer model structurally without pre-answering the main interpretive questions.
