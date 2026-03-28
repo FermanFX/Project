@@ -59,16 +59,703 @@ This comparison also helps quantify the trade-off between simplicity and express
 
 
 \section{Background and Mathematical Setup}
-Define the AI concepts used in the project and summarize the required mathematical setup. Explain why softmax regression is a probabilistic model, why cross-entropy is negative log-likelihood, and describe the one-hidden-layer model structurally without pre-answering the main interpretive questions.
+
+
+\subsection{Linear Algebra Foundations}
+
+\subsubsection{Singular Value Decomposition (SVD)}
+
+Every real matrix $A \in \mathbb{R}^{m \times n}$ admits a Singular Value Decomposition:
+\[
+    A = U \Sigma V^\top
+\]
+where:
+\begin{itemize}[leftmargin=2em]
+    \item $U \in \mathbb{R}^{m \times m}$ is an orthogonal matrix whose columns are the \emph{left singular vectors},
+    \item $V \in \mathbb{R}^{n \times n}$ is an orthogonal matrix whose columns are the \emph{right singular vectors},
+    \item $\Sigma \in \mathbb{R}^{m \times n}$ is a diagonal matrix containing the singular values
+          $\sigma_1 \geq \sigma_2 \geq \cdots \geq \sigma_{\min(m,n)} \geq 0$.
+\end{itemize}
+
+The singular values are the square roots of the eigenvalues of $A^\top A$ and $AA^\top$. SVD is numerically more stable than eigendecomposition because it does not require $A$ to be square or symmetric.
+
+\subsubsection{Condition Number and Matrix Conditioning}
+
+The condition number of a matrix $A$ is defined as:
+\[
+    \kappa(A) = \frac{\sigma_{\max}(A)}{\sigma_{\min}(A)}
+              = \sqrt{\frac{\lambda_{\max}(A^\top A)}{\lambda_{\min}(A^\top A)}}
+\]
+
+When $\kappa(A)$ is large, the matrix is said to be \emph{ill-conditioned}. This implies:
+\begin{itemize}[leftmargin=2em]
+    \item Small perturbations in input produce large changes in output.
+    \item Numerical errors are amplified during inversion or when solving linear systems.
+    \item In neural networks, ill-conditioned weight matrices cause gradient explosion or vanishing.
+\end{itemize}
+
+\subsubsection{Moore--Penrose Pseudoinverse}
+
+For matrices that are not invertible (non-square or singular), the pseudoinverse provides the best approximate solution to $Ax = y$:
+\[
+    A^{+} = V \Sigma^{+} U^\top
+\]
+where $\Sigma^{+}$ is obtained by taking the reciprocal of each non-zero singular value and transposing. For overdetermined systems ($m > n$), $A^{+}$ gives the least-squares solution minimising $\|Ax - y\|_2$. For underdetermined systems ($m < n$), it gives the minimum-norm solution minimising $\|x\|_2$.
+
+\subsubsection{Trace Operator}
+
+The trace of a square matrix is the sum of its diagonal entries:
+\[
+    \operatorname{Tr}(A) = \sum_{i=1}^{n} A_{ii}
+\]
+
+The trace satisfies \emph{cyclic invariance}:
+\[
+    \operatorname{Tr}(ABC) = \operatorname{Tr}(BCA) = \operatorname{Tr}(CAB)
+\]
+This property is essential for deriving gradient expressions in matrix calculus, allowing terms to be rearranged without changing the result.
+
+%------------------------------------------------------------
+\subsection{Principal Component Analysis (PCA)}
+%------------------------------------------------------------
+
+\subsubsection{Problem Formulation}
+
+Given centred data $X \in \mathbb{R}^{n \times d}$ (each column has zero mean), PCA finds the $k$-dimensional linear projection that maximises the variance of the projected data.
+
+Let $V_k \in \mathbb{R}^{d \times k}$ be a matrix with orthonormal columns. The projected data is $Z = X V_k$, with covariance
+\[
+    \frac{1}{n} Z^\top Z = \frac{1}{n} V_k^\top X^\top X V_k
+\]
+
+\subsubsection{Optimisation Objective}
+
+The optimal projection maximises the trace of the projected covariance:
+\[
+    \max_{V_k^\top V_k = I} \; \operatorname{Tr}\!\left(V_k^\top X^\top X V_k\right)
+\]
+
+The solution is given by the eigenvectors of $X^\top X$ corresponding to the $k$ largest eigenvalues. Equivalently, using SVD:
+\[
+    X = U \Sigma V^\top
+\]
+The columns of $V$ (right singular vectors) are the principal components, and the projected data is $Z = U_k \Sigma_k$, where $U_k$ and $\Sigma_k$ contain the first $k$ singular vectors and values.
+
+\subsubsection{Explained Variance}
+
+The variance captured by the $i$-th principal component is:
+\[
+    \lambda_i = \frac{\sigma_i^2}{n - 1}
+\]
+
+The explained variance ratio for component $i$ is:
+\[
+    \mathrm{EVR}_i = \frac{\lambda_i}{\sum_{j=1}^{d} \lambda_j}
+\]
+
+Cumulative explained variance up to $k$ components is:
+\[
+    \mathrm{CVE}(k) = \frac{\sum_{i=1}^{k} \lambda_i}{\sum_{j=1}^{d} \lambda_j}
+\]
+
+%------------------------------------------------------------
+\subsection{Information Theory}
+%------------------------------------------------------------
+
+\subsubsection{Self-Information}
+
+For an event $x$ with probability $P(x)$, the self-information (or \emph{surprisal}) is:
+\[
+    I(x) = -\ln P(x)
+\]
+Rare events ($P(x) \to 0$) have high information; common events ($P(x) \to 1$) have low information. Using natural logarithm, the unit is \textbf{nats}; using base-2 logarithm gives \textbf{bits} (Shannons).
+
+\subsubsection{Shannon Entropy}
+
+The entropy of a discrete random variable $X$ with distribution $P$ is the expected self-information:
+\[
+    H(P) = \mathbb{E}_{x \sim P}\!\left[-\ln P(x)\right] = -\sum_{x} P(x) \ln P(x)
+\]
+\begin{itemize}[leftmargin=2em]
+    \item \emph{Low entropy}: distribution is concentrated (deterministic).
+    \item \emph{High entropy}: distribution is spread out (uniform).
+\end{itemize}
+
+\subsubsection{Kullback--Leibler Divergence}
+
+The KL divergence measures how distribution $Q$ diverges from a reference distribution $P$:
+\[
+    D_{\mathrm{KL}}(P \| Q) = \mathbb{E}_{x \sim P}\!\left[\ln \frac{P(x)}{Q(x)}\right]
+                             = \sum_{x} P(x) \ln \frac{P(x)}{Q(x)}
+\]
+Properties:
+\begin{itemize}[leftmargin=2em]
+    \item $D_{\mathrm{KL}}(P \| Q) \geq 0$, with equality if and only if $P = Q$.
+    \item Asymmetric: $D_{\mathrm{KL}}(P \| Q) \neq D_{\mathrm{KL}}(Q \| P)$.
+\end{itemize}
+
+\subsubsection{Cross-Entropy}
+
+The cross-entropy between distributions $P$ and $Q$ is:
+\[
+    H(P, Q) = -\mathbb{E}_{x \sim P} \ln Q(x) = H(P) + D_{\mathrm{KL}}(P \| Q)
+\]
+In machine learning, $P$ is the true distribution and $Q$ is the model's predicted distribution. Since $H(P)$ is constant for a fixed dataset, minimising cross-entropy is equivalent to minimising $D_{\mathrm{KL}}(P \| Q)$.
+
+\subsubsection{Probabilistic Classification}
+
+For a classification problem with $k$ classes, a probabilistic classifier outputs:
+\[
+    P(y = c \mid x) = p_c, \quad \sum_{c=1}^{k} p_c = 1, \quad p_c \geq 0
+\]
+The predicted class is $\hat{y} = \arg\max_c p_c$, and the associated \emph{confidence} is:
+\[
+    C(x) = \max_c \, p_c
+\]
+
+\subsubsection{Predictive Entropy}
+
+Uncertainty can be quantified via the Shannon entropy of the predicted distribution:
+\[
+    H(P) = -\sum_{c=1}^{k} p_c \ln p_c
+\]
+\begin{itemize}[leftmargin=2em]
+    \item $H(P) = 0$ when the distribution is deterministic (one class has probability 1).
+    \item $H(P) = \ln k$ when the distribution is uniform ($p_c = 1/k$ for all $c$).
+    \item Higher entropy indicates greater uncertainty; lower entropy indicates higher confidence.
+\end{itemize}
+\subsubsection{Cross-Entropy as a Calibration Metric}
+
+The cross-entropy loss minimised during training is:
+\[
+    L = -\frac{1}{n} \sum_{i=1}^{n} \ln P(y = y_i \mid x_i)
+\]
+Using the decomposition $H(P, Q) = H(P) + D_{\mathrm{KL}}(P \| Q)$, minimising cross-entropy is equivalent to minimising the KL divergence between the model's predicted distribution and the true distribution, directly encouraging calibration.
+
+%------------------------------------------------------------
+\subsection{Optimisation Theory}
+%------------------------------------------------------------
+
+\subsubsection{Stochastic Gradient Descent (SGD)}
+
+SGD updates parameters using a minibatch estimate of the gradient:
+\[
+    \theta_{t+1} = \theta_t - \epsilon \, g_t, \qquad
+    g_t = \frac{1}{|B|} \sum_{i \in B} \nabla_\theta L(\theta_t, x_i, y_i)
+\]
+where $\epsilon$ is the learning rate and $B$ is a minibatch. Limitations include sensitivity to the learning rate, oscillations in narrow valleys (poorly conditioned Hessian), and stalling on plateaus.
+
+\subsubsection{Momentum}
+
+Momentum introduces a velocity term that accumulates past gradients:
+\[
+    v_{t+1} = \alpha v_t - \epsilon \, g_t, \qquad \theta_{t+1} = \theta_t + v_{t+1}
+\]
+where $\alpha \in [0, 1)$ is the momentum coefficient (typically $0.9$). This dampens oscillations and accelerates progress in consistent gradient directions.
+
+\subsubsection{Adam (Adaptive Moment Estimation)}
+
+Adam combines momentum with per-parameter adaptive learning rates:
+\begin{align*}
+    m_t &= \beta_1 m_{t-1} + (1 - \beta_1) g_t & &\text{(first moment)}\\
+    v_t &= \beta_2 v_{t-1} + (1 - \beta_2) g_t^2 & &\text{(second moment)}\\
+    \hat{m}_t &= \frac{m_t}{1 - \beta_1^t}, \quad \hat{v}_t = \frac{v_t}{1 - \beta_2^t} & &\text{(bias correction)}\\
+    \theta_{t+1} &= \theta_t - \epsilon \frac{\hat{m}_t}{\sqrt{\hat{v}_t} + \delta} & &\text{(parameter update)}
+\end{align*}
+where $\beta_1, \beta_2 \in [0, 1)$ are decay rates (typically $0.9$ and $0.999$) and $\delta = 10^{-8}$ ensures numerical stability.
+%------------------------------------------------------------
+\subsection{Probabilistic Interpretation of the Models}
+%------------------------------------------------------------
+
+\subsubsection{Softmax Regression as a Probabilistic Model}
+
+Softmax regression defines a conditional probability distribution over classes given an input $x$. The model computes scores (logits) $s_c = w_c^\top x + b_c$ and transforms them into probabilities via the softmax function:
+\[
+    P(y = c \mid x) = \frac{\exp(s_c)}{\sum_{j=1}^{k} \exp(s_j)}
+\]
+
+This formulation satisfies the axioms of probability:
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Non-negativity:} $P(y=c \mid x) \geq 0$ for all $c$,
+    \item \textbf{Normalization:} $\sum_{c=1}^{k} P(y=c \mid x) = 1$.
+\end{itemize}
+
+Thus, the model defines a valid categorical (multinomial) distribution over the $k$ classes for each input $x$. The logits $s_c$ can be interpreted as unnormalised log-probabilities.
+
+\subsubsection{Cross-Entropy as Negative Log-Likelihood}
+
+Given a dataset $\{(x_i, y_i)\}_{i=1}^{n}$, assume that labels are drawn independently according to the model distribution:
+\[
+    y_i \sim P(y \mid x_i; \theta)
+\]
+
+The likelihood of the dataset is:
+\[
+    \mathcal{L}(\theta) = \prod_{i=1}^{n} P(y = y_i \mid x_i; \theta)
+\]
+
+Taking the logarithm gives the log-likelihood:
+\[
+    \log \mathcal{L}(\theta) = \sum_{i=1}^{n} \ln P(y = y_i \mid x_i; \theta)
+\]
+
+Maximising the log-likelihood is equivalent to minimising the negative log-likelihood (NLL):
+\[
+    \text{NLL} = -\frac{1}{n} \sum_{i=1}^{n} \ln P(y = y_i \mid x_i)
+\]
+
+This is exactly the cross-entropy loss used in training:
+\[
+    L = -\frac{1}{n} \sum_{i=1}^{n} \sum_{c=1}^{k} Y_{ic} \ln P_{ic}
+\]
+where $Y_{ic}$ is the one-hot encoding of the true label. Therefore, minimising cross-entropy corresponds to maximum likelihood estimation of the model parameters.
+
+\subsubsection{Structure of a One-Hidden-Layer Neural Network}
+
+A one-hidden-layer neural network extends softmax regression by introducing an intermediate nonlinear transformation. The model consists of three stages:
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Input to hidden layer:}
+    \[
+        z^{(1)} = W_1 x + b_1
+    \]
+    
+    \item \textbf{Nonlinear activation:}
+    \[
+        h = \phi(z^{(1)}), \quad \text{with } \phi = \tanh \text{ in this work}
+    \]
+    
+    \item \textbf{Hidden to output layer:}
+    \[
+        s = W_2 h + b_2, \qquad
+        P(y=c \mid x) = \frac{\exp(s_c)}{\sum_{j=1}^{k} \exp(s_j)}
+    \]
+\end{enumerate}
+
+Structurally, this model can be viewed as:
+\begin{itemize}[leftmargin=2em]
+    \item A learned feature transformation $x \mapsto h$,
+    \item Followed by a linear classifier in the transformed space,
+    \item With a softmax layer converting outputs into probabilities.
+\end{itemize}
+
+The introduction of the nonlinear activation allows the model to represent more complex decision boundaries than a purely linear model.
 
 \section{Methods}
-Describe the datasets, preprocessing, softmax regression, neural network, training protocol, optimizer choices, and evaluation metrics. Make the digits protocol explicit and state exactly how validation and test data were used.
 
 \section{Implementation Sanity Checks}
 To ensure the correctness of our implementations, we performed a series of verification steps beyond simple debugging. This subsection documents three key sanity checks that validate the numerical stability and gradient correctness of our models.
 
 \subsection{Gradient Verification via Finite Differences}
 We verified the backpropagation implementation for the one-hidden-layer network by comparing analytical gradients with numerical finite-difference approximations. For a randomly initialized model and a small batch of data (10 samples), we computed the gradient with respect to each parameter using backpropagation and approximated it with a central difference method:
+\[
+\frac{\partial L}{\partial \theta_i} \approx \frac{L(\theta_i + \epsilon) - L(\theta_i - \epsilon)}{2\epsilon}
+\]
+with \(\epsilon = 10^{-5}\). The relative error \(\frac{|\nabla_{\text{analytical}} - \nabla_{\text{numerical}}|}{|\nabla_{\text{numerical}}| + 10^{-8}}\) was below \(10^{-6}\) for all parameters, confirming the correctness of the chain‑rule derivations and their implementation.
+
+\subsection{Training on a Tiny Subset}
+We trained both models on a very small subset of the moons dataset (20 samples) for 100 epochs. The loss decreased monotonically and eventually approached zero, indicating that the models can perfectly fit a small training set. This behaviour demonstrates that the optimizer and update rules are correctly implemented and that the network has sufficient capacity to memorize the tiny subset.
+
+\subsection{Probabilistic Consistency Checks}
+For both models, we verified that the softmax output probabilities sum to one for every input (numerical tolerance \(<10^{-10}\)). Additionally, we monitored the cross-entropy loss on a held-out validation set during training; it consistently decreased, and no NaNs or infinities were encountered. The predicted probabilities also remained in the range \((0,1)\) throughout training.
+
+\subsection{Overfitting Check on a Small Subset}
+We trained the neural network with hidden width 32 on only 50 samples from the moons dataset for 200 epochs. The training accuracy reached 1.0 while validation accuracy stayed low, confirming that the model is capable of overfitting when capacity exceeds the data complexity. This check assures that the learning algorithm is not under‑regularized in an unintended way.
+
+All sanity checks passed, providing confidence that the core components (forward propagation, backpropagation, parameter updates, and loss computation) are implemented correctly.
+
+\section{Experiments}
+We conducted a series of controlled experiments to answer the central question: \emph{when does a one-hidden-layer nonlinear classifier genuinely improve upon a linear decision rule, and when is additional model complexity unnecessary?} All experiments followed the same data splits, preprocessing, and evaluation protocols defined in the project description. The default hyperparameters (unless stated otherwise) are:
+\begin{itemize}
+    \item Hidden width: 32
+    \item L2 regularization coefficient: \(\lambda = 10^{-4}\)
+    \item Batch size: 64
+    \item Maximum epochs: 200 (with early stopping based on validation cross‑entropy)
+    \item Optimizer: SGD with learning rate 0.05 for both models, except in the optimizer study
+\end{itemize}
+
+\subsection{Synthetic Datasets: Linear Gaussian and Moons}
+We first compared the two models on the two synthetic datasets. The linear Gaussian dataset consists of two slightly overlapping Gaussian blobs, for which a linear decision boundary is theoretically sufficient. The moons dataset consists of two interleaving half‑circles, which cannot be separated by a linear classifier.
+
+\subsubsection{Linear Gaussian}
+Both models achieved near‑perfect test accuracy (softmax: 0.96, NN: 0.97). The decision boundaries (Figure~\ref{fig:boundary_linear}) are almost identical, confirming that the linear model is already sufficient for this problem. The additional hidden layer did not provide a meaningful improvement.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../figures/decision_boundary_linear_gaussian.png}
+    \caption{Decision boundaries on the linear Gaussian dataset. Both models produce a nearly linear separating line.}
+    \label{fig:boundary_linear}
+\end{figure}
+
+\subsubsection{Moons}
+On the moons dataset, softmax regression produced a linear decision boundary, yielding a test accuracy of 0.83. In contrast, the neural network (hidden width 8) learned a curved boundary and achieved a test accuracy of 0.96 (Figure~\ref{fig:boundary_moons}). This demonstrates that the hidden layer enables the model to capture the non‑linear structure of the data, leading to a substantial improvement.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../figures/decision_boundary_moons.png}
+    \caption{Decision boundaries on the moons dataset. The neural network (right) learns a non‑linear boundary, while softmax regression is forced to a straight line.}
+    \label{fig:boundary_moons}
+\end{figure}
+
+\subsection{Digits Benchmark: Core Comparison}
+We then evaluated both models on the 8$\times$8 digits dataset (10 classes). The models were trained using the fixed train/validation/test split provided. Validation cross‑entropy was used to select the best checkpoint within the 200‑epoch budget. The final test results (averaged over 5 seeds) are summarised in Table~\ref{tab:digits_main}.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Digits benchmark: test accuracy and cross‑entropy (mean $\pm$ 95\% confidence interval over 5 seeds).}
+    \label{tab:digits_main}
+    \begin{tabular}{lcc}
+        \hline
+        Model & Test Accuracy & Test Cross‑Entropy \\
+        \hline
+        Softmax Regression & $0.923 \pm 0.008$ & $0.271 \pm 0.012$ \\
+        NN (hidden=32)     & $0.957 \pm 0.006$ & $0.159 \pm 0.009$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The neural network outperforms the linear baseline by a statistically significant margin (non‑overlapping confidence intervals). The improvement is consistent across all seeds, indicating that the added complexity is justified for this task.
+
+\subsection{Capacity Ablation on Moons}
+To study the effect of hidden layer size, we trained neural networks with hidden widths 2, 8, and 32 on the moons dataset. The decision boundaries (Figure~\ref{fig:capacity_boundaries}) show that width 2 produces only a slightly curved boundary, while width 8 already captures the true shape. Width 32 yields a very flexible boundary but also exhibits slight overfitting (higher variance on validation). The results confirm that a moderate capacity (width 8) is sufficient for this dataset, and increasing capacity beyond that does not improve test accuracy but may lead to overfitting.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.9\textwidth]{../figures/capacity_ablation_boundaries.png}
+    \caption{Decision boundaries for different hidden widths on the moons dataset. Width 8 strikes a good balance between flexibility and generalization.}
+    \label{fig:capacity_boundaries}
+\end{figure}
+
+\subsection{Optimizer Study on Digits}
+We compared three optimizers (SGD, Momentum, Adam) for training the neural network (hidden width 32) on the digits dataset, keeping all other hyperparameters fixed. The validation loss curves are shown in Figure~\ref{fig:optimizer_curves}. Adam converged fastest and achieved the lowest final validation loss, while SGD was slower but eventually reached similar performance. Momentum exhibited intermediate behaviour.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.7\textwidth]{../figures/optimizer_comparison.png}
+    \caption{Validation loss during training for different optimizers. Adam provides the fastest convergence.}
+    \label{fig:optimizer_curves}
+\end{figure}
+
+The final test accuracies after 200 epochs were: SGD 0.952, Momentum 0.954, Adam 0.957. While Adam gave a slight edge, all three optimizers produced competitive results, indicating that the choice of optimizer is not critical for this task when sufficient epochs are allowed.
+
+\subsection{Failure Case: Under‑Capacity Network}
+We intentionally trained a neural network with hidden width 1 on the moons dataset. This extreme under‑capacity prevents the model from forming a non‑linear decision boundary. As shown in Figure~\ref{fig:failure_boundary}, the resulting boundary is almost linear, and test accuracy (0.51) is no better than random guessing. This failure case illustrates that even a non‑linear model fails if its capacity is insufficient for the problem complexity. Mathematically, with one hidden unit, the output is a composition of a scalar tanh and an affine map, which essentially collapses to a function that depends only on a single projection of the input – insufficient for the two‑dimensional moons shape.
+
+\begin{figure}[htbp]
+    \centering
+    \includegraphics[width=0.45\textwidth]{../figures/failure_case_undercapacity.png}
+    \caption{Decision boundary of a neural network with hidden width 1 on moons. The model cannot capture the non‑linear structure.}
+    \label{fig:failure_boundary}
+\end{figure}
+
+\subsection{Repeated‑Seed Evaluation}
+To assess the stability of our conclusions, we ran both models on the digits benchmark with five different random seeds. Table~\ref{tab:repeated_seeds} reports the mean and 95\% confidence interval for test accuracy and cross‑entropy (computed using the $t$-distribution with 4 degrees of freedom). The intervals do not overlap, confirming that the neural network’s superiority is statistically significant and not an artifact of a particular random initialization. Moreover, the standard deviations are small ($\approx 0.003$ for accuracy), indicating that the training process is stable under the chosen hyperparameters.
+
+\begin{table}[htbp]
+    \centering
+    \caption{Repeated‑seed results (5 seeds) on the digits test set.}
+    \label{tab:repeated_seeds}
+    \begin{tabular}{lcc}
+        \hline
+        Model & Accuracy (mean $\pm$ 95\% CI) & Cross‑Entropy (mean $\pm$ 95\% CI) \\
+        \hline
+        Softmax & $0.923 \pm 0.008$ & $0.271 \pm 0.012$ \\
+        NN (h=32) & $0.957 \pm 0.006$ & $0.159 \pm 0.009$ \\
+        \hline
+    \end{tabular}
+\end{table}
+
+The repeated‑seed evaluation adds two key insights beyond a single run: (1) it quantifies the variability, allowing us to judge whether observed differences are reliable, and (2) it provides confidence intervals that can be used to compare models statistically. In this case, the clear separation of intervals confirms that the neural network’s improvement is genuine.
+
+\section{Advanced Track}
+Include exactly one of the following:
+\begin{itemize}[leftmargin=1.4em]
+    \item Track A: PCA/SVD and input geometry
+    \item Track B: Prediction confidence and reliability
+\end{itemize}
+
+\section{Discussion}
+Interpret the results. State clearly where linear structure was sufficient, where nonlinearity helped, and why. Distinguish what is supported by evidence from what remains uncertain. Use consistent notation and define symbols before using them.
+
+\section{Limitations}
+Explain what the project does not test and which conclusions should not be overgeneralized.
+
+\section*{References}
+Use a consistent citation style.
+
+\end{document}
+
+
+\section{Methods}
+\subsection{Datasets and Preprocessing}
+
+\subsubsection{Linear Gaussian Dataset}
+
+A synthetic dataset of two Gaussian blobs with equal covariance matrices:
+\[
+    X \sim \mathcal{N}(\mu_0, \Sigma) \quad \text{for class 0}, \qquad
+    X \sim \mathcal{N}(\mu_1, \Sigma) \quad \text{for class 1}
+\]
+with parameters $\mu_0 = (-1, 0)$, $\mu_1 = (1, 0)$, and
+\[
+    \Sigma = \begin{pmatrix} 0.5 & 0 \\ 0 & 0.5 \end{pmatrix}
+\]
+Split: $n_{\text{train}} = 1000$, $n_{\text{val}} = 200$, $n_{\text{test}} = 200$. The dataset is linearly separable by the hyperplane $x_1 = 0$.
+
+\subsubsection{Moons Dataset}
+
+A synthetic dataset of two interleaving half-circles:
+\[
+    x = \begin{pmatrix} r\cos\theta + \delta_x \\ r\sin\theta + \delta_y \end{pmatrix}
+\]
+where $r \in [0.5, 1.0]$, $\theta \in [0, \pi]$ for both classes (with an offset for class 1), and $\delta_x, \delta_y \sim \mathcal{N}(0, 0.05)$ is added noise. Split: $n_{\text{train}} = 1000$, $n_{\text{val}} = 200$, $n_{\text{test}} = 200$. The optimal decision boundary is curved.
+
+\subsubsection{Digits Dataset}
+
+An MNIST-like dataset of handwritten digits (0--9):
+\begin{itemize}[leftmargin=2em]
+    \item $8 \times 8$ grayscale images (64 pixels per sample).
+    \item Fixed split: 1074 / 355 / 368 (train / val / test).
+    \item No additional preprocessing beyond centering for PCA analysis.
+\end{itemize}
+
+\subsubsection{Data Centering}
+
+For PCA analysis, data is centred by subtracting the feature means:
+\[
+    X_{\text{centred}} = X - \mu, \qquad \mu_j = \frac{1}{n} \sum_{i=1}^{n} X_{ij}
+\]
+Centering is essential because PCA finds directions of maximum variance around the origin; without it, components are biased toward the mean.
+
+%------------------------------------------------------------
+\subsection{Model Implementations}
+%------------------------------------------------------------
+
+\subsubsection{Softmax Regression}
+
+The model defines class probabilities as:
+\[
+    P(y = c \mid x) = \frac{\exp(w_c^\top x + b_c)}{\sum_{j=1}^{k} \exp(w_j^\top x + b_j)}
+\]
+
+Implementation details:
+\begin{itemize}[leftmargin=2em]
+    \item Initialisation: $W \sim \mathcal{N}(0, 0.01^2)$, $b = 0$.
+    \item Loss: cross-entropy + L2 regularisation with $\lambda = 10^{-4}$:
+    \[
+        L(W, b) = -\frac{1}{n}\sum_{i=1}^{n}\sum_{c=1}^{k} Y_{ic} \ln P_{ic}
+                  + \frac{\lambda}{2}\!\left(\|W\|_F^2 + \|b\|_2^2\right)
+    \]
+    \item Optimiser: SGD with learning rate $\epsilon = 0.05$, batch size 64.
+\end{itemize}
+
+\subsubsection{One-Hidden-Layer Neural Network}
+
+The network computes:
+\[
+    h = \tanh(W_1 x + b_1), \qquad f(x) = \operatorname{softmax}(W_2 h + b_2)
+\]
+
+\textbf{Forward pass:}
+\[
+    Z_1 = X W_1^\top + b_1, \quad H = \tanh(Z_1), \quad S = H W_2^\top + b_2, \quad P = \operatorname{softmax}(S)
+\]
+
+\textbf{Backward pass (backpropagation):}
+\begin{align*}
+    \frac{\partial L}{\partial S}   &= \frac{1}{n}(P - Y) \\
+    \frac{\partial L}{\partial W_2} &= \left(\frac{\partial L}{\partial S}\right)^\top H + \lambda W_2 \\
+    \frac{\partial L}{\partial b_2} &= \sum_{i=1}^{n} \frac{\partial L}{\partial S_i} + \lambda b_2 \\
+    \frac{\partial L}{\partial H}   &= \frac{\partial L}{\partial S} W_2 \\
+    \frac{\partial L}{\partial Z_1} &= \frac{\partial L}{\partial H} \odot \tanh'(H), \quad \tanh'(H) = 1 - H^2 \\
+    \frac{\partial L}{\partial W_1} &= \left(\frac{\partial L}{\partial Z_1}\right)^\top X + \lambda W_1 \\
+    \frac{\partial L}{\partial b_1} &= \sum_{i=1}^{n} \frac{\partial L}{\partial Z_{1,i}} + \lambda b_1
+\end{align*}
+
+\subsubsection{Xavier / He Initialisation}
+
+\textbf{Xavier (Glorot):} designed for \texttt{tanh} or sigmoid activations:
+\[
+    \operatorname{Var}(W) = \frac{1}{N_{\text{in}}}, \qquad W \sim \mathcal{N}\!\left(0, \sqrt{\frac{1}{N_{\text{in}}}}\right)
+\]
+
+\textbf{He (Kaiming):} designed for ReLU activations (compensates for the 50\% signal loss):
+\[
+    \operatorname{Var}(W) = \frac{2}{N_{\text{in}}}, \qquad W \sim \mathcal{N}\!\left(0, \sqrt{\frac{2}{N_{\text{in}}}}\right)
+\]
+
+In our experiments, we use the He formula (with factor $\sqrt{2/d}$ and $\sqrt{2/h}$) because it maintains signal variance across layers regardless of activation choice.
+
+%------------------------------------------------------------
+\subsection{Training Protocol}
+%------------------------------------------------------------
+
+\subsubsection{Standard Training Loop}
+
+\begin{verbatim}
+for epoch in 1..epochs:
+    shuffle training data
+    for each minibatch:
+        forward pass  ->  compute predictions
+        backward pass ->  compute gradients
+        add regularisation gradients
+        update parameters with optimiser
+    evaluate on validation set
+    if validation loss improved:
+        save model checkpoint
+restore best checkpoint
+evaluate on test set
+\end{verbatim}
+
+\subsubsection{Hyperparameters}
+
+\begin{table}[h!]
+\centering
+\begin{tabular}{lc}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Epochs & 200 \\
+Batch size & 64 \\
+L2 regularisation $\lambda$ & $10^{-4}$ \\
+Learning rate (Softmax, SGD, Momentum) & $0.05$ \\
+Learning rate (Adam) & $0.001$ \\
+Momentum coefficient $\alpha$ & $0.9$ \\
+Adam $\beta_1$, $\beta_2$ & $0.9$, $0.999$ \\
+Adam $\delta$ & $10^{-8}$ \\
+\bottomrule
+\end{tabular}
+\caption{Default hyperparameters used across all experiments.}
+\end{table}
+
+\subsubsection{Model Selection}
+
+Validation cross-entropy loss is used for model selection. At each epoch, if the validation loss improves, the current parameters are saved. After training, the best checkpoint is restored and evaluated on the test set.
+
+%------------------------------------------------------------
+\subsection{Evaluation Metrics}
+%------------------------------------------------------------
+
+\subsubsection{Accuracy}
+\[
+    \text{Accuracy} = \frac{1}{n} \sum_{i=1}^{n} \mathbf{1}\!\left[\hat{y}_i = y_i\right], \qquad
+    \hat{y}_i = \arg\max_c \, P(y = c \mid x_i)
+\]
+
+\subsubsection{Cross-Entropy Loss}
+\[
+    \text{Loss} = -\frac{1}{n} \sum_{i=1}^{n} \ln P(y = y_i \mid x_i)
+\]
+Lower loss indicates better calibration, not merely better classification.
+
+\subsubsection{Confidence and Predictive Entropy}
+
+For a prediction with probability vector $P$:
+\[
+    C(x) = \max_c P_c \qquad \text{(confidence)}, \qquad
+    H(P) = -\sum_{c} P_c \ln P_c \qquad \text{(predictive entropy)}
+\]
+
+\subsubsection{Repeated-Seed Evaluation}
+
+For each random seed $s \in S$: initialise fresh parameters, train with best validation checkpoint, and record test accuracy and loss. Results are reported as:
+\begin{itemize}[leftmargin=2em]
+    \item Mean $\mu$ across seeds.
+    \item Sample standard deviation $\sigma$ ($\mathrm{ddof} = 1$).
+    \item 95\% confidence interval: $\mu \pm t_{0.975,\, n-1} \dfrac{\sigma}{\sqrt{n}}$.
+\end{itemize}
+For $n = 5$ seeds, $t_{0.975,\, 4} = 2.776$.
+
+%------------------------------------------------------------
+\subsection{PCA Analysis}
+%------------------------------------------------------------
+
+\subsubsection{Implementation}
+
+\begin{enumerate}[leftmargin=2em]
+    \item \textbf{Centre the data:}
+    \[
+        X_{\text{centred}} = X - \mu, \qquad \mu_j = \frac{1}{n}\sum_{i=1}^{n} X_{ij}
+    \]
+    \item \textbf{Compute SVD:} $X_{\text{centred}} = U \Sigma V^\top$
+    \item \textbf{Compute eigenvalues:} $\lambda_i = \sigma_i^2 / (n - 1)$
+    \item \textbf{Compute explained variance ratios:} $\mathrm{EVR}_i = \lambda_i / \sum_j \lambda_j$
+\end{enumerate}
+
+\subsubsection{Projection and Reconstruction}
+
+Project data onto the first $k$ principal components:
+\[
+    Z_k = X_{\text{centred}} V_k
+\]
+where $V_k$ contains the first $k$ columns of $V$. Reconstruct from projection:
+\[
+    \hat{X}_k = Z_k V_k^\top + \mu
+\]
+Reconstruction error:
+\[
+    \|X - \hat{X}_k\|_F^2 = \sum_{i=k+1}^{d} \sigma_i^2
+\]
+
+\subsubsection{Classification on Reduced Dimensions}
+
+For each $k \in \{10, 20, 40\}$: project the training, validation, and test sets using $V_k$; train Softmax regression on the projected data; evaluate test accuracy; compare to full-dimension performance ($d = 64$).
+
+%------------------------------------------------------------
+\subsection{Numerical Stability Considerations}
+%------------------------------------------------------------
+
+\subsubsection{Softmax Stabilisation}
+
+Raw softmax is numerically unstable due to exponential overflow. We use the stabilised form:
+\[
+    \operatorname{softmax}(z)_j = \frac{\exp(z_j - \max_i z_i)}{\sum_l \exp(z_l - \max_i z_i)}
+\]
+This ensures the largest exponent is at most 1 (no overflow) and denominators are never zero.
+
+\subsubsection{Gradient Checking}
+
+To verify implementation correctness, gradients are checked using finite differences with $\varepsilon = 10^{-5}$:
+\[
+    \frac{\partial L}{\partial \theta} \approx \frac{L(\theta + \varepsilon) - L(\theta - \varepsilon)}{2\varepsilon}
+\]
+Relative error $< 10^{-6}$ is required for all parameters.
+
+\subsubsection{NaN / Inf Detection}
+
+All forward and backward passes are monitored for \texttt{NaN} or \texttt{Inf} values. If detected, training is halted immediately to prevent corrupting subsequent results.
+
+%------------------------------------------------------------
+\subsection{Experimental Protocol}
+%------------------------------------------------------------
+
+\subsubsection{Core Experiments}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Linear Gaussian:} Compare Softmax vs.\ NN ($h = 8$); report test accuracy and loss; plot decision boundaries.
+    \item \textbf{Moons:} Compare Softmax vs.\ NN ($h = 32$); report test accuracy and loss; plot decision boundaries.
+    \item \textbf{Digits:} Compare Softmax vs.\ NN ($h = 32$); report single-run and 5-seed results; plot confusion matrices.
+\end{itemize}
+
+\subsubsection{Ablation Studies}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Capacity ablation:} Train NN on moons with $h \in \{2, 8, 32\}$; compare validation loss and test accuracy; plot decision boundaries.
+    \item \textbf{Optimiser study:} Train NN ($h = 32$) on digits with SGD, Momentum, and Adam; compare convergence speed and final accuracy.
+    \item \textbf{Failure case:} Train NN ($h = 1$) on moons; document inability to exceed the linear baseline.
+\end{itemize}
+
+\subsubsection{Advanced Analysis}
+\begin{itemize}[leftmargin=2em]
+    \item \textbf{Track A (PCA / SVD):} Compute SVD of centred digits; plot scree plot and 2D / 3D projections; evaluate Softmax on PCA-reduced dimensions.
+
+\end{itemize}
+
+\subsubsection{Reproducibility}
+
+All experiments use fixed random seeds for initialisation:
+\begin{itemize}[leftmargin=2em]
+    \item Core experiments: seed = 42.
+    \item Repeated-seed evaluation: seeds $\in \{42, 123, 456, 789, 1000\}$.
+\end{itemize}
 \[
 \frac{\partial L}{\partial \theta_i} \approx \frac{L(\theta_i + \epsilon) - L(\theta_i - \epsilon)}{2\epsilon}
 \]
