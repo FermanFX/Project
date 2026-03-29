@@ -20,9 +20,9 @@
 7. [Data](#7-data)
 8. [Implementation Sanity Checks, Experiments and Results](#8-implementation-sanity-checks-experiments-and-results)
 9. [Mathematical Analysis and Derivatives](#9-mathematical-analysis-and-derivatives)
-10. [Team and Responsibilities](#11-team-and-responsibilities)
-11. [Comprehensive Checklists](#12-comprehensive-checklists)
-12. [Questions That Might Help](#13-questions-that-might-help)
+10. [Team and Responsibilities](#10-team-and-responsibilities)
+11. [Comprehensive Checklists](#11-comprehensive-checklists)
+12. [Questions That Might Help](#12-questions-that-might-help)
 
 ---
 
@@ -66,6 +66,8 @@ This question has practical significance because choosing the most complex model
 Can work in any OS.
 
 ## Step-by-Step Installation
+
+## Fast Interpretation process
 
 ### 1. Clone the Repository
 
@@ -154,6 +156,29 @@ python main.py --experiment digits
 python main.py --experiment ablations
 ```
 
+## Normal (Standart) Interpretation process 
+
+### 1. Clone the Repository
+
+```bash
+git clone <repository-url>
+cd Project
+```
+### 2. Run The Code
+```
+# Go to your python engine and open the main.py file there.
+Run the python file --> main.py
+
+bash
+python main.py
+
+or 
+
+If you system uses Python 3 specifically:
+
+bash
+python3 main.py
+```
 ---
 
 # 4. Project Structure
@@ -166,47 +191,71 @@ Project/
 ├── main.py                         # Main experiment script
 ├── pyproject.toml                  # Python project configuration
 ├── necessity.txt                   # Python package requirements
-├── .python-version                # Python version
-├── uv.lock                        # uv lock file
+├── .python-version                 # Python version
+├── uv.lock                         # uv lock file
+├── README.md                       # Project documentation
 │
 └── starter_pack/                   # Starter pack
-    │
-    ├── README.md                   # Project documentation
     │
     ├── src/                        # Main code directory
     │   ├── __init__.py             # Package init
     │   ├── models.py               # Softmax and NN models
     │   ├── optimizers.py           # SGD, Momentum, Adam
-    │   ├── trainer.py               # Training loop
-    │   ├── evaluation.py            # Evaluation tools
-    │   ├── visualization.py         # Plot functions
+    │   ├── trainer.py              # Training loop
+    │   ├── evaluation.py           # Evaluation tools
+    │   ├── visualization.py        # Plot functions
     │   ├── data_loader.py          # Data loader
-    │   └── logging_utils.py        # Logging tools
+    │   ├── logging_utils.py        # Logging tools
+    |   └── README.md               # Src file documentation
     │
     ├── data/                       # Dataset files
+    |   ├── README.md               # Data file documentation
     │   ├── digits_data.npz         # Digits dataset
     │   ├── digits_split_indices.npz # Split indices
     │   ├── linear_gaussian.npz     # Linear synthetic dataset
     │   └── moons.npz               # Non-linear synthetic dataset
     │
     ├── scripts/                    # Helper scripts
+    |   ├── README.md               # Scripts file documentation
     │   ├── generate_synthetic.py   # Synthetic data generator
     │   └── make_digits_split.py    # Split indices generator
     │
     ├── figures/                    # Output plots
+    |   ├── capacity_ablation_boundaries.png
+    |   ├── capacity_ablation_curves.png
+    |   ├── confusion_matrix_nn.png
+    |   ├── confusion_matrix_softmax.png
+    |   ├── decision_boundary_linear_gaussian.png
+    |   ├── decision_boundary_moons.png
+    |   ├── failure_case_undercapacity.png
+    |   ├── optimizer_comparison.png
+    |   ├── track_a_pca2d.png
+    |   ├── track_a_pca3d.png
+    |   ├── track_a_scree.png
+    |   ├── track_b_confidence_nn.png
+    |   ├── track_b_confidence_softmax.png
+    |   ├── training_dynamics_digits.png
+    |   ├── training_dynamics_linear_gaussian.png
+    |   ├── training_dynamics_moons.png
+    │   ├── optimizer_comparison.png
+    |   └── ReADME.md               # Figures file documentation
     │
     ├── results/                    # Results directory
     │   ├── tables/                 # Tables
     │   ├── metrics/                # Metrics
     │   ├── statistics/             # Statistics
-    │   └── logs/                   # Log files
+    │   ├── logs/                   # Log files
+    │   └── README.md               # Results file documentation
     │
     ├── slides/                     # Presentation materials
     │
-    └── report/                     # Report templates
+    ├── report/                     # Report templates
+        ├── additioal report/       # Additional Report
+        ├── final report/           # Final Report
+        └── README.md               # Repor file documentation
 ```
 
-## File Descriptions
+## Some Implemented Files Descriptions
 
 | File | Description |
 |------|-------------|
@@ -506,7 +555,7 @@ y = digits.target       # (1797,)
 ---
 
 
-# 8. Implementation sanity checks, Experiments, results
+# 8. Implementation sanity checks experiments and results
 
 ## Implementation Sanity Checks
 To ensure our implementations were mathematically correct and numerically stable, we implemented verification functions in evaluation.py and used them to validate our models.
