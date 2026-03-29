@@ -43,6 +43,8 @@ from starter_pack.src.visualization import (
 from starter_pack.src.visualization import plot_pca_3d
 from starter_pack.src.logging_utils import ExperimentLogger, save_comparison_table, save_statistics
 
+# Trying
+from starter_pack.src.sanity_checks import run_all_sanity_checks
 
 # Default hyperparameters (from PDF protocol)
 DEFAULTS = {
@@ -714,7 +716,8 @@ def run_capacity_ablation(moons_data):
         histories[width] = history
         models[width] = model
 
-        test_acc = np.mean(np.argmax(trainer.model.predict(X_test)[1], axis=1) == y_test)
+        test_labels, _ = trainer.model.predict(X_test)
+        test_acc = np.mean(test_labels == y_test)
         print(f"Width={width} - Test Accuracy: {test_acc:.4f}")
 
     # Decision boundaries
@@ -1108,6 +1111,9 @@ def main():
 
     setup_directories()
     linear_data, moons_data, digits_data = load_data()
+
+    if args.experiment != 'check':
+        run_all_sanity_checks(moons_data, digits_data)
 
     if args.experiment == 'all':
         # Synthetic experiments
