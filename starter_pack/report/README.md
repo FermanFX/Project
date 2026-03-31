@@ -1,6 +1,4 @@
-# 📄 Report
-
-This directory contains the reports for the **Math4AI Capstone Project**.
+#This directory contains the reports for the **Math4AI Capstone Project**.
 
 ## 📁 Structure
 - **final report** → Main results, methodology, and key conclusions  
