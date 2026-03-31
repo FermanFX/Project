@@ -1069,10 +1069,10 @@ This project is executed as a team. Below are the team members and their areas o
 
 | Team Member         | Role              | Area of Responsibility                  |
 |---------------------|-------------------|-----------------------------------------|
-| Ferman Khankishiyev | _________________ | _______________________________________ |
-| Bayram Bayramov     | _________________ | _______________________________________ |
-| Hasan Mammadov      | _________________ | _______________________________________ |
-| Mahmud Ramazanov    | _________________ | _______________________________________ |
+| Ferman Khankishiyev | Team Lead, Lead Developer & Codebase Supervisor | Designed the initial architecture and code skeleton of the project, managed the GitHub repository, coordinated the development process and monitored the overall progress of the project and additionally improved the code </> 💻|
+| Bayram Bayramov     | Data, Code & Model Developer & Documentation Lead | Conducted data research, enhanced and expanded the base code structure, contributed to the development of additional models and features, and played a significant role in the preparation of project documentation, presentations and reports. 🧠 |
+| Hasan Mammadov      | Repository & Integration Engineer & Code Developer | Worked on understanding extended datasets, supported repository integration, and handled debugging and overall repository maintenance. 🔬 |
+| Mahmud Ramazanov    | Documentation & Code Developer & Theoretical Overview  | Focused on theorical aspects, contributed to the preparation of presentations and project reports, played role in overall review and quality assurance, and made sigificant cotributions to code development and improvement. 📖|
 
 
 ## GitHub Branch Strategy
