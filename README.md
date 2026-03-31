@@ -735,7 +735,7 @@ With a single hidden unit, the network's performance (85.0% accuracy) is identic
 Interpretation: This failure case demonstrates that capacity matters. When hidden width is insufficient (h = 1), the network lacks the representational power to learn curved decision boundaries, performing no better than a linear model. Sufficient hidden units (h ≥ 8) are required to capture the nonlinear structure.
 
 
-## Advanced Analysis (Track A / Track B)
+## Advanced Analysis (Track A & Track B)
 ### Track A: PCA/SVD Analysis
 We performed SVD on the centered digits data to analyze the intrinsic dimensionality of the feature space.
 
@@ -791,11 +791,8 @@ The 3D visualization provides additional insight into the geometric structure of
 | PC3	| 5.5%	| 35.2% | 
 
 
-**OBSERVATIONS FROM 3D VISUALIZATION CAN BE ADDED!**
-
 
 ### Track B: Prediction Confidence and Reliability
-(Can be added: what these mean, what are bins, confidence, entropy, information theory)
 We analyzed the calibration of both models on the digits test set by binning predictions by confidence (max predicted probability) and computing empirical accuracy within each bin. The analysis used the fixed digits benchmark with the test set containing 368 samples.
 
 **Confidence Calibration**
@@ -1104,8 +1101,6 @@ main (production branch)
 - [ ] `starter_pack/data/moons.npz` file exists
 - [ ] `scripts/generate_synthetic.py` script works
 - [ ] `scripts/make_digits_split.py` script works
-- [ ] No model implementation code exists in starter pack
-- [ ] All data file shapes are correct
 
 ## Setup Checklist
 
@@ -1128,6 +1123,9 @@ Follow these steps when setting up the system.
 - [ ] L2 regularization is applied
 - [ ] Gradient check passes
 - [ ] Probability sum check passes
+- [ ] NAN/inf detection
+- [ ] Overfit test on small data
+- [ ] Verified loss decrease 
 
 ### Neural Network
 - [ ] `forward()` method performs complete forward pass
@@ -1136,10 +1134,11 @@ Follow these steps when setting up the system.
 - [ ] Tanh derivative is correctly computed (`1 - H²`)
 - [ ] He initialization is used
 - [ ] Gradient check passes
+- [ ] All sanity checks pass
 
 ### Optimizers
-- [ ] SGD works correctly
-- [ ] Momentum accumulates velocity
+- [ ] Optimizers work correctly
+- [ ] Momentum accumulates velocity via keeping track of list instances
 - [ ] Adam performs bias correction
 - [ ] Each optimizer has reset() method
 
