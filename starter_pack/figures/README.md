@@ -1,9 +1,18 @@
-# `figures/`
+# Figures
 
-Use this folder for report-ready and slide-ready plots.
+This directory contains report-ready and slide-ready plots used in the project.
 
-Recommended practice:
+All figures are generated from reproducible experiments and are included in the main and extended reports.
 
-- save figures with descriptive names
-- keep axis labels and legends readable
-- separate exploratory plots from final polished figures if needed
+## Naming Convention
+
+Figures are saved with descriptive names that reflect their content and purpose.
+
+## Style Guidelines
+
+- Axis labels and legends are kept clear and readable.
+- Plots are formatted for direct use in reports and presentations.
+
+## Organization
+
+Exploratory plots are kept separate from final figures. Only polished, publication-ready visualizations are stored in this folder.

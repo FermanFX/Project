@@ -388,10 +388,9 @@ class NNTrainer(Trainer):
             grad_W2_reg = grad_W2 + self.reg_lambda * self.model.W2
 
             # Optimizer step
-            self.optimizer.step(self.model, {'W1': grad_W1_reg, 'b1': grad_b1, 'W2': grad_W2_reg, 'b2': grad_b2})
+            reg_term = 0.5 * self.reg_lambda * (np.sum(self.model.W1**2) + np.sum(self.model.W2**2))
 
-            # Track metrics
-            reg_term = 0.5 * self.reg_lambda * (np.sum(self.model.W1**2) + np.sum(self.model.b1**2) + np.sum(self.model.W2**2) + np.sum(self.model.b2**2))
+            self.optimizer.step(self.model, {'W1': grad_W1_reg, 'b1': grad_b1, 'W2': grad_W2_reg, 'b2': grad_b2})
             batch_loss = self.model.compute_loss(Y_batch, cache['P'], reg_term)
             epoch_loss += batch_loss * len(X_batch)
 
