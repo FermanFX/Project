@@ -1,4 +1,4 @@
-# `data/`
+ # `data/`
 
 This folder contains only data assets.
 
@@ -11,4 +11,4 @@ Expected contents:
 
 Related deterministic scripts live in `../scripts/`.
 
-Students should treat these files as fixed inputs to the capstone, not as a prompt to search for alternative datasets.
+Students should treat these files as fixed inputs to capstone, not as a prompt to search for alternative datasets.
